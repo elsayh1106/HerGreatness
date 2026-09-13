@@ -4,1085 +4,618 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Her Greatness - Pregnancy Companion</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
-        .smooth-transition { transition: all 0.3s ease; }
-        .heart-beat { animation: heartbeat 1.3s ease-in-out infinite; }
-        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.1); } 28% { transform: scale(1); } }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .slide-in { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body>
-    <div id="root"></div>
-    
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback } = React;
+<body class="bg-gradient-to-br from-pink-50 via-white to-purple-50">
 
-        // ============ TRANSLATIONS (11 Languages) ============
-        const translations = {
-            en: {
-                auth: { username: 'Username', password: 'Password', age: 'Age', country: 'Country', register: 'Register', login: 'Login', logout: 'Logout', roleQuestion: 'Who are you?', iAmMother: "I'm the Mother", iAmRelative: "I'm a Relative", pregnancyStatus: 'Pregnancy Status', preparingPregnancy: 'Preparing for pregnancy', currentlyPregnant: 'Currently Pregnant', lmp: 'Last Menstrual Period', firstTime: 'First-time mother?', yes: 'Yes', no: 'No', legal_age_error: 'You must be 18+ to register' },
-                nav: { home: 'Home', calendar: 'Calendar', growth: 'Baby Growth', checkup: 'Checkups', diary: 'Diary', education: 'Learn', community: 'Community', ai: 'AI Q&A', help: 'Help', blog: 'Blog', admin: 'Admin' },
-                hero: { title: 'Her Greatness', subtitle: 'Your Complete Pregnancy Companion', description: 'Supporting you through every step with love, care, and expert guidance', cta: 'Start Your Journey' },
-                calendar: { title: 'Pregnancy Calendar', calculateDueDate: 'Calculate Due Date', yourDueDate: 'Your Due Date', weeksPregnant: 'weeks pregnant', daysUntilDue: 'days until due date', lmpLabel: 'Last Menstrual Period' },
-                growth: { title: 'Baby Growth Tracker', subtitle: 'Watch Your Baby Grow', selectMonth: 'Select Month', babySize: 'Baby Size', length: 'Length', weight: 'Weight', development: 'Development' },
-                diary: { title: 'Mood & Habits Diary', mood: 'Mood', habits: 'Daily Habits', log: 'Log Entry', avgMood: 'Avg. Mood', completion: 'Completion Rate', sleep: 'Sleep', exercise: 'Exercise', nutrition: 'Nutrition', water: 'Water', meditation: 'Meditation', energyLevel: 'Energy', cravings: 'Cravings', symptoms: 'Symptoms', notes: 'Notes', moodHistory: 'Mood History', weeklyTrend: 'Weekly Trend', entries: 'Entries' },
-                community: { title: 'Community Feed', posts: 'Posts', comments: 'Comments', share: 'Share Your Story', anonymous: 'Post Anonymously', createPost: 'Create Post', like: 'Like', delete: 'Delete', comment: 'Comment' },
-                ai: { title: 'AI Q&A', subtitle: 'Ask Any Question', responseTone: 'Response Tone', teenFriendly: 'Teen-Friendly', firstTime: 'First-Time Parent', medicalDetailed: 'Medical Detailed', askQuestion: 'Ask your question...', getAnswer: 'Get Answer', commonQuestions: 'Common Questions', disclaimer: '⚠️ Important Medical Disclaimer' },
-                blog: { title: 'Learning Center', forTeens: 'For Teen Parents', forFirstTime: 'For First-Time Parents', general: 'General Knowledge', overwhelmed: 'When Overwhelmed', reassurance: 'Reassurance & Support', readMore: 'Read More', admin: 'Blog Admin', addBlog: 'Add Blog', editBlog: 'Edit Blog', deleteBlog: 'Delete Blog' },
-                common: { save: 'Save', cancel: 'Cancel', submit: 'Submit', close: 'Close', next: 'Next', previous: 'Previous', week: 'Week', weeks: 'Weeks', day: 'Day', days: 'Days', home: 'Home' }
-            },
-            es: {
-                auth: { username: 'Usuario', password: 'Contraseña', age: 'Edad', country: 'País', register: 'Registrar', login: 'Iniciar Sesión', logout: 'Cerrar Sesión', roleQuestion: '¿Quién eres?', iAmMother: 'Soy la Madre', iAmRelative: 'Soy un Pariente', pregnancyStatus: 'Estado del Embarazo', preparingPregnancy: 'Preparándose para el embarazo', currentlyPregnant: 'Actualmente Embarazada', lmp: 'Último Período', firstTime: '¿Primera madre?', yes: 'Sí', no: 'No', legal_age_error: 'Debes tener 18+ años para registrarte' },
-                nav: { home: 'Inicio', calendar: 'Calendario', growth: 'Crecimiento', checkup: 'Revisiones', diary: 'Diario', education: 'Aprender', community: 'Comunidad', ai: 'IA', help: 'Ayuda', blog: 'Blog', admin: 'Admin' },
-                hero: { title: 'Su Grandeza', subtitle: 'Tu Compañera Completa del Embarazo', description: 'Apoyándote en cada paso con amor, cuidado y orientación experta', cta: 'Comienza Tu Viaje' },
-                calendar: { title: 'Calendario del Embarazo', calculateDueDate: 'Calcular Fecha', yourDueDate: 'Tu Fecha de Parto', weeksPregnant: 'semanas de embarazo', daysUntilDue: 'días hasta el parto', lmpLabel: 'Último Período' },
-                growth: { title: 'Seguimiento del Crecimiento', subtitle: 'Observa Crecer a Tu Bebé', selectMonth: 'Selecciona Mes', babySize: 'Tamaño del Bebé', length: 'Largo', weight: 'Peso', development: 'Desarrollo' },
-                diary: { title: 'Diario de Ánimo y Hábitos', mood: 'Estado de Ánimo', habits: 'Hábitos Diarios', log: 'Registrar', avgMood: 'Promedio', completion: 'Cumplimiento', sleep: 'Sueño', exercise: 'Ejercicio', nutrition: 'Nutrición', water: 'Agua', meditation: 'Meditación', energyLevel: 'Energía', cravings: 'Antojos', symptoms: 'Síntomas', notes: 'Notas', moodHistory: 'Historial', weeklyTrend: 'Tendencia Semanal', entries: 'Registros' },
-                community: { title: 'Feed de Comunidad', posts: 'Publicaciones', comments: 'Comentarios', share: 'Comparte Tu Historia', anonymous: 'Publicar Anónimamente', createPost: 'Crear Publicación', like: 'Me gusta', delete: 'Eliminar', comment: 'Comentar' },
-                ai: { title: 'IA Q&A', subtitle: 'Haz Cualquier Pregunta', responseTone: 'Tono de Respuesta', teenFriendly: 'Amigable para Adolescentes', firstTime: 'Primer Padre', medicalDetailed: 'Médicamente Detallado', askQuestion: 'Haz tu pregunta...', getAnswer: 'Obtener Respuesta', commonQuestions: 'Preguntas Frecuentes', disclaimer: '⚠️ Descargo de Responsabilidad Médica Importante' },
-                blog: { title: 'Centro de Aprendizaje', forTeens: 'Para Padres Adolescentes', forFirstTime: 'Para Padres Primerizos', general: 'Conocimiento General', overwhelmed: 'Cuando te Sientas Abrumada', reassurance: 'Tranquilización y Apoyo', readMore: 'Leer Más', admin: 'Admin del Blog', addBlog: 'Agregar Blog', editBlog: 'Editar Blog', deleteBlog: 'Eliminar Blog' },
-                common: { save: 'Guardar', cancel: 'Cancelar', submit: 'Enviar', close: 'Cerrar', next: 'Siguiente', previous: 'Anterior', week: 'Semana', weeks: 'Semanas', day: 'Día', days: 'Días', home: 'Inicio' }
-            },
-            fr: {
-                auth: { username: 'Nom d\'utilisateur', password: 'Mot de passe', age: 'Âge', country: 'Pays', register: 'S\'inscrire', login: 'Connexion', logout: 'Déconnexion', roleQuestion: 'Qui êtes-vous?', iAmMother: 'Je suis la mère', iAmRelative: 'Je suis un parent', pregnancyStatus: 'Statut de grossesse', preparingPregnancy: 'Se préparer à la grossesse', currentlyPregnant: 'Actuellement enceinte', lmp: 'Dernière menstruation', firstTime: 'Première mère?', yes: 'Oui', no: 'Non', legal_age_error: 'Vous devez avoir 18 ans ou plus pour vous inscrire' },
-                nav: { home: 'Accueil', calendar: 'Calendrier', growth: 'Croissance', checkup: 'Visites', diary: 'Journal', education: 'Apprendre', community: 'Communauté', ai: 'IA', help: 'Aide', blog: 'Blog', admin: 'Admin' },
-                hero: { title: 'Sa Grandeur', subtitle: 'Votre Compagne Complète de Grossesse', description: 'Vous soutenir à chaque étape avec amour, soin et guidance experte', cta: 'Commencez Votre Voyage' },
-                calendar: { title: 'Calendrier de Grossesse', calculateDueDate: 'Calculer la Date', yourDueDate: 'Votre Date d\'Accouchement', weeksPregnant: 'semaines de grossesse', daysUntilDue: 'jours jusqu\'à l\'accouchement', lmpLabel: 'Dernière menstruation' },
-                growth: { title: 'Suivi de la Croissance', subtitle: 'Regardez Votre Bébé Grandir', selectMonth: 'Sélectionnez Mois', babySize: 'Taille du Bébé', length: 'Longueur', weight: 'Poids', development: 'Développement' },
-                diary: { title: 'Journal d\'Humeur et Habitudes', mood: 'Humeur', habits: 'Habitudes Quotidiennes', log: 'Enregistrer', avgMood: 'Moyenne', completion: 'Taux', sleep: 'Sommeil', exercise: 'Exercice', nutrition: 'Nutrition', water: 'Eau', meditation: 'Méditation', energyLevel: 'Énergie', cravings: 'Envies', symptoms: 'Symptômes', notes: 'Notes', moodHistory: 'Historique', weeklyTrend: 'Tendance', entries: 'Entrées' },
-                community: { title: 'Feed Communautaire', posts: 'Publications', comments: 'Commentaires', share: 'Partagez Votre Histoire', anonymous: 'Publier Anonymement', createPost: 'Créer Publication', like: 'Aimer', delete: 'Supprimer', comment: 'Commenter' },
-                ai: { title: 'IA Q&A', subtitle: 'Posez Toute Question', responseTone: 'Ton de Réponse', teenFriendly: 'Ado-Friendly', firstTime: 'Premier Parent', medicalDetailed: 'Médicalement Détaillé', askQuestion: 'Posez votre question...', getAnswer: 'Obtenir Réponse', commonQuestions: 'Questions Fréquentes', disclaimer: '⚠️ Avis Médical Important' },
-                blog: { title: 'Centre d\'Apprentissage', forTeens: 'Pour Parents Ados', forFirstTime: 'Pour Premiers Parents', general: 'Connaissance Générale', overwhelmed: 'Quand Submergée', reassurance: 'Réconfort et Soutien', readMore: 'Lire Plus', admin: 'Admin Blog', addBlog: 'Ajouter Blog', editBlog: 'Éditer Blog', deleteBlog: 'Supprimer Blog' },
-                common: { save: 'Enregistrer', cancel: 'Annuler', submit: 'Soumettre', close: 'Fermer', next: 'Suivant', previous: 'Précédent', week: 'Semaine', weeks: 'Semaines', day: 'Jour', days: 'Jours', home: 'Accueil' }
-            },
-            de: {
-                auth: { username: 'Benutzername', password: 'Passwort', age: 'Alter', country: 'Land', register: 'Registrieren', login: 'Anmelden', logout: 'Abmelden', roleQuestion: 'Wer bist du?', iAmMother: 'Ich bin die Mutter', iAmRelative: 'Ich bin eine Verwandte', pregnancyStatus: 'Schwangerschaftsstatus', preparingPregnancy: 'Schwangerschaft planen', currentlyPregnant: 'Aktuell schwanger', lmp: 'Letzte Periode', firstTime: 'Erste Mutter?', yes: 'Ja', no: 'Nein', legal_age_error: 'Sie müssen mindestens 18 Jahre alt sein' },
-                nav: { home: 'Startseite', calendar: 'Kalender', growth: 'Wachstum', checkup: 'Kontrolluntersuchungen', diary: 'Tagebuch', education: 'Lernen', community: 'Gemeinschaft', ai: 'KI', help: 'Hilfe', blog: 'Blog', admin: 'Admin' },
-                hero: { title: 'Ihre Größe', subtitle: 'Ihr vollständiger Schwangerschaftsbegleiter', description: 'Unterstützung in jedem Schritt mit Liebe, Fürsorge und fachkundiger Anleitung', cta: 'Beginnen Sie Ihre Reise' },
-                calendar: { title: 'Schwangerschaftskalender', calculateDueDate: 'Termin berechnen', yourDueDate: 'Ihr Geburtstermin', weeksPregnant: 'Wochen schwanger', daysUntilDue: 'Tage bis zum Geburtstermin', lmpLabel: 'Letzte Periode' },
-                growth: { title: 'Wachstumsverfolgung', subtitle: 'Beobachten Sie Ihr Baby', selectMonth: 'Monat wählen', babySize: 'Größe des Babys', length: 'Länge', weight: 'Gewicht', development: 'Entwicklung' },
-                diary: { title: 'Stimmungs- und Gewohnheitstagebuch', mood: 'Stimmung', habits: 'Tägliche Gewohnheiten', log: 'Eintrag', avgMood: 'Durchschnitt', completion: 'Abschlussquote', sleep: 'Schlaf', exercise: 'Bewegung', nutrition: 'Ernährung', water: 'Wasser', meditation: 'Meditation', energyLevel: 'Energie', cravings: 'Heißhunger', symptoms: 'Symptome', notes: 'Notizen', moodHistory: 'Verlauf', weeklyTrend: 'Wöchentlicher Trend', entries: 'Einträge' },
-                community: { title: 'Gemeinschafts-Feed', posts: 'Beiträge', comments: 'Kommentare', share: 'Teilen Sie Ihre Geschichte', anonymous: 'Anonym posten', createPost: 'Beitrag erstellen', like: 'Mag ich', delete: 'Löschen', comment: 'Kommentieren' },
-                ai: { title: 'KI Q&A', subtitle: 'Jede Frage stellen', responseTone: 'Antworttönung', teenFriendly: 'Teen-freundlich', firstTime: 'Ersteltern', medicalDetailed: 'Medizinisch detailliert', askQuestion: 'Stellen Sie Ihre Frage...', getAnswer: 'Antwort erhalten', commonQuestions: 'Häufig Gestellte Fragen', disclaimer: '⚠️ Wichtiger Medizinischer Hinweis' },
-                blog: { title: 'Lernzentrum', forTeens: 'Für Teen-Eltern', forFirstTime: 'Für Ersteltern', general: 'Allgemeines Wissen', overwhelmed: 'Wenn überfordert', reassurance: 'Beruhigung und Unterstützung', readMore: 'Mehr lesen', admin: 'Blog-Admin', addBlog: 'Blog hinzufügen', editBlog: 'Blog bearbeiten', deleteBlog: 'Blog löschen' },
-                common: { save: 'Speichern', cancel: 'Abbrechen', submit: 'Absenden', close: 'Schließen', next: 'Nächste', previous: 'Vorherige', week: 'Woche', weeks: 'Wochen', day: 'Tag', days: 'Tage', home: 'Startseite' }
-            },
-            ja: {
-                auth: { username: 'ユーザー名', password: 'パスワード', age: '年齢', country: '国', register: '登録', login: 'ログイン', logout: 'ログアウト', roleQuestion: 'あなたは誰ですか?', iAmMother: '私は母です', iAmRelative: '私は親戚です', pregnancyStatus: '妊娠状態', preparingPregnancy: '妊娠を準備中', currentlyPregnant: '現在妊娠中', lmp: '最後の月経', firstTime: '初めての母ですか?', yes: 'はい', no: 'いいえ', legal_age_error: '登録には18歳以上である必要があります' },
-                nav: { home: 'ホーム', calendar: 'カレンダー', growth: '成長', checkup: '検診', diary: '日記', education: '学ぶ', community: 'コミュニティ', ai: 'AI', help: 'ヘルプ', blog: 'ブログ', admin: '管理' },
-                hero: { title: 'Her Greatness', subtitle: 'あなたの完全な妊娠の伴侶', description: '愛、ケア、専門家の指導とともに、すべてのステップでサポート', cta: 'あなたの旅を始める' },
-                calendar: { title: '妊娠カレンダー', calculateDueDate: '予定日を計算', yourDueDate: 'あなたの予定日', weeksPregnant: '妊娠週', daysUntilDue: '予定日まで', lmpLabel: '最後の月経' },
-                growth: { title: '成長追跡', subtitle: '赤ちゃんが成長するのを見る', selectMonth: '月を選択', babySize: '赤ちゃんのサイズ', length: '長さ', weight: '重さ', development: '発育' },
-                diary: { title: '気分と習慣日記', mood: '気分', habits: '日常習慣', log: '記録', avgMood: '平均', completion: '完了率', sleep: '睡眠', exercise: '運動', nutrition: '栄養', water: '水分', meditation: '瞑想', energyLevel: 'エネルギー', cravings: '渇望', symptoms: '症状', notes: 'メモ', moodHistory: '履歴', weeklyTrend: '週間トレンド', entries: 'エントリー' },
-                community: { title: 'コミュニティフィード', posts: '投稿', comments: 'コメント', share: 'あなたのストーリーをシェア', anonymous: '匿名で投稿', createPost: '投稿を作成', like: 'いいね', delete: '削除', comment: 'コメント' },
-                ai: { title: 'AI Q&A', subtitle: 'どんな質問でも', responseTone: '応答トーン', teenFriendly: 'ティーンフレンドリー', firstTime: 'ファーストペアレント', medicalDetailed: '医学的詳細', askQuestion: 'あなたの質問を入力...', getAnswer: '回答を取得', commonQuestions: 'よくある質問', disclaimer: '⚠️ 重要な医学免責事項' },
-                blog: { title: '学習センター', forTeens: 'ティーン親向け', forFirstTime: 'ファーストペアレント向け', general: '一般知識', overwhelmed: '圧倒されたときに', reassurance: '安心とサポート', readMore: 'もっと読む', admin: 'ブログ管理', addBlog: 'ブログを追加', editBlog: 'ブログを編集', deleteBlog: 'ブログを削除' },
-                common: { save: '保存', cancel: 'キャンセル', submit: '送信', close: '閉じる', next: '次へ', previous: '前へ', week: '週', weeks: '週', day: '日', days: '日', home: 'ホーム' }
-            },
-            zh: {
-                auth: { username: '用户名', password: '密码', age: '年龄', country: '国家', register: '注册', login: '登录', logout: '登出', roleQuestion: '你是谁?', iAmMother: '我是母亲', iAmRelative: '我是亲属', pregnancyStatus: '妊娠状态', preparingPregnancy: '准备怀孕', currentlyPregnant: '目前怀孕', lmp: '最后一次月经', firstTime: '初为人母?', yes: '是的', no: '否', legal_age_error: '您必须年满18岁才能注册' },
-                nav: { home: '首页', calendar: '日历', growth: '成长', checkup: '检查', diary: '日记', education: '学习', community: '社区', ai: '人工智能', help: '帮助', blog: '博客', admin: '管理' },
-                hero: { title: 'Her Greatness', subtitle: '您完整的怀孕伴侣', description: '用爱心、关怀和专家指导支持您的每一步', cta: '开始您的旅程' },
-                calendar: { title: '怀孕日历', calculateDueDate: '计算预产期', yourDueDate: '您的预产期', weeksPregnant: '周妊娠', daysUntilDue: '距预产期', lmpLabel: '最后一次月经' },
-                growth: { title: '成长追踪', subtitle: '看着您的宝宝长大', selectMonth: '选择月份', babySize: '宝宝大小', length: '长度', weight: '重量', development: '发展' },
-                diary: { title: '情绪和习惯日记', mood: '心情', habits: '日常习惯', log: '记录', avgMood: '平均值', completion: '完成率', sleep: '睡眠', exercise: '运动', nutrition: '营养', water: '饮水', meditation: '冥想', energyLevel: '能量', cravings: '渴望', symptoms: '症状', notes: '笔记', moodHistory: '历史记录', weeklyTrend: '周趋势', entries: '条目' },
-                community: { title: '社区动态', posts: '帖子', comments: '评论', share: '分享您的故事', anonymous: '匿名发帖', createPost: '创建帖子', like: '喜欢', delete: '删除', comment: '评论' },
-                ai: { title: 'AI问答', subtitle: '提任何问题', responseTone: '响应语气', teenFriendly: '青少年友好', firstTime: '初为人亲', medicalDetailed: '医学详细', askQuestion: '输入您的问题...', getAnswer: '获取答案', commonQuestions: '常见问题', disclaimer: '⚠️ 重要医学免责声明' },
-                blog: { title: '学习中心', forTeens: '为青少年父母', forFirstTime: '为初为人亲', general: '一般知识', overwhelmed: '当感到不知所措时', reassurance: '安心和支持', readMore: '了解更多', admin: '博客管理', addBlog: '添加博客', editBlog: '编辑博客', deleteBlog: '删除博客' },
-                common: { save: '保存', cancel: '取消', submit: '提交', close: '关闭', next: '下一步', previous: '上一步', week: '周', weeks: '周', day: '日', days: '日', home: '首页' }
-            },
-            it: {
-                auth: { username: 'Nome utente', password: 'Password', age: 'Età', country: 'Paese', register: 'Registrati', login: 'Accedi', logout: 'Esci', roleQuestion: 'Chi sei?', iAmMother: 'Sono la madre', iAmRelative: 'Sono un parente', pregnancyStatus: 'Stato della gravidanza', preparingPregnancy: 'Mi sto preparando alla gravidanza', currentlyPregnant: 'Attualmente incinta', lmp: 'Ultimo ciclo', firstTime: 'Prima madre?', yes: 'Sì', no: 'No', legal_age_error: 'Devi avere almeno 18 anni per registrarti' },
-                nav: { home: 'Home', calendar: 'Calendario', growth: 'Crescita', checkup: 'Controlli', diary: 'Diario', education: 'Impara', community: 'Comunità', ai: 'IA', help: 'Aiuto', blog: 'Blog', admin: 'Admin' },
-                hero: { title: 'Her Greatness', subtitle: 'La Tua Compagna di Gravidanza Completa', description: 'Supportarti ad ogni passo con amore, cura e guida esperta', cta: 'Inizia Il Tuo Viaggio' },
-                calendar: { title: 'Calendario della Gravidanza', calculateDueDate: 'Calcola Data', yourDueDate: 'La Tua Data di Scadenza', weeksPregnant: 'settimane di gravidanza', daysUntilDue: 'giorni fino alla data', lmpLabel: 'Ultimo ciclo' },
-                growth: { title: 'Tracciamento della Crescita', subtitle: 'Guarda Il Tuo Bambino Crescere', selectMonth: 'Seleziona Mese', babySize: 'Dimensione del Bambino', length: 'Lunghezza', weight: 'Peso', development: 'Sviluppo' },
-                diary: { title: 'Diario di Umore e Abitudini', mood: 'Umore', habits: 'Abitudini Quotidiane', log: 'Registra', avgMood: 'Umore Medio', completion: 'Tasso', sleep: 'Sonno', exercise: 'Esercizio', nutrition: 'Nutrizione', water: 'Acqua', meditation: 'Meditazione', energyLevel: 'Energia', cravings: 'Voglie', symptoms: 'Sintomi', notes: 'Note', moodHistory: 'Cronologia', weeklyTrend: 'Tendenza Settimanale', entries: 'Voci' },
-                community: { title: 'Feed Comunità', posts: 'Post', comments: 'Commenti', share: 'Condividi la Tua Storia', anonymous: 'Pubblica Anonimamente', createPost: 'Crea Post', like: 'Mi Piace', delete: 'Elimina', comment: 'Commenta' },
-                ai: { title: 'IA Q&A', subtitle: 'Fai Qualsiasi Domanda', responseTone: 'Tono di Risposta', teenFriendly: 'Friendly per Adolescenti', firstTime: 'Primo Genitore', medicalDetailed: 'Medico Dettagliato', askQuestion: 'Fai la tua domanda...', getAnswer: 'Ottieni Risposta', commonQuestions: 'Domande Frequenti', disclaimer: '⚠️ Importante Avvertenza Medica' },
-                blog: { title: 'Centro di Apprendimento', forTeens: 'Per Genitori Adolescenti', forFirstTime: 'Per Primo Genitore', general: 'Conoscenza Generale', overwhelmed: 'Quando Ti Senti Sopraffatto', reassurance: 'Rassicurazione e Supporto', readMore: 'Leggi di più', admin: 'Admin Blog', addBlog: 'Aggiungi Blog', editBlog: 'Modifica Blog', deleteBlog: 'Elimina Blog' },
-                common: { save: 'Salva', cancel: 'Annulla', submit: 'Invia', close: 'Chiudi', next: 'Prossimo', previous: 'Precedente', week: 'Settimana', weeks: 'Settimane', day: 'Giorno', days: 'Giorni', home: 'Home' }
-            },
-            ru: {
-                auth: { username: 'Имя пользователя', password: 'Пароль', age: 'Возраст', country: 'Страна', register: 'Регистрация', login: 'Вход', logout: 'Выход', roleQuestion: 'Кто ты?', iAmMother: 'Я мать', iAmRelative: 'Я родственник', pregnancyStatus: 'Статус беременности', preparingPregnancy: 'Готовлюсь к беременности', currentlyPregnant: 'Сейчас беременна', lmp: 'Последняя менструация', firstTime: 'Первая мать?', yes: 'Да', no: 'Нет', legal_age_error: 'Вы должны быть не моложе 18 лет для регистрации' },
-                nav: { home: 'Главная', calendar: 'Календарь', growth: 'Рост', checkup: 'Осмотры', diary: 'Дневник', education: 'Учиться', community: 'Сообщество', ai: 'ИИ', help: 'Справка', blog: 'Блог', admin: 'Администратор' },
-                hero: { title: 'Her Greatness', subtitle: 'Ваш Полный Спутник при Беременности', description: 'Поддержка на каждом шаге с любовью, заботой и экспертным руководством', cta: 'Начните Свой Путь' },
-                calendar: { title: 'Календарь Беременности', calculateDueDate: 'Рассчитать Дату', yourDueDate: 'Ваша Дата Родов', weeksPregnant: 'недель беременности', daysUntilDue: 'дней до даты', lmpLabel: 'Последняя менструация' },
-                growth: { title: 'Отслеживание Роста', subtitle: 'Смотрите, Как Растет Ваш Малыш', selectMonth: 'Выберите Месяц', babySize: 'Размер Малыша', length: 'Длина', weight: 'Вес', development: 'Развитие' },
-                diary: { title: 'Дневник Настроения и Привычек', mood: 'Настроение', habits: 'Ежедневные Привычки', log: 'Запись', avgMood: 'Среднее Настроение', completion: 'Коэффициент', sleep: 'Сон', exercise: 'Упражнение', nutrition: 'Питание', water: 'Вода', meditation: 'Медитация', energyLevel: 'Энергия', cravings: 'Тяга', symptoms: 'Симптомы', notes: 'Заметки', moodHistory: 'История', weeklyTrend: 'Еженедельный Тренд', entries: 'Записи' },
-                community: { title: 'Лента Сообщества', posts: 'Посты', comments: 'Комментарии', share: 'Поделитесь Своей Историей', anonymous: 'Опубликовать Анонимно', createPost: 'Создать Пост', like: 'Нравится', delete: 'Удалить', comment: 'Комментировать' },
-                ai: { title: 'ИИ Q&A', subtitle: 'Задайте Любой Вопрос', responseTone: 'Тон Ответа', teenFriendly: 'Подростков', firstTime: 'Первый Родитель', medicalDetailed: 'Медицинский Детальный', askQuestion: 'Задайте ваш вопрос...', getAnswer: 'Получить ответ', commonQuestions: 'Часто Задаваемые Вопросы', disclaimer: '⚠️ Важное Медицинское Уведомление' },
-                blog: { title: 'Центр Обучения', forTeens: 'Для Родителей-Подростков', forFirstTime: 'Для Первых Родителей', general: 'Общие Знания', overwhelmed: 'Когда Вы Чувствуете Себя Перегруженным', reassurance: 'Уверенность и Поддержка', readMore: 'Читать Далее', admin: 'Администратор блога', addBlog: 'Добавить блог', editBlog: 'Редактировать блог', deleteBlog: 'Удалить блог' },
-                common: { save: 'Сохранить', cancel: 'Отмена', submit: 'Отправить', close: 'Закрыть', next: 'Далее', previous: 'Назад', week: 'Неделя', weeks: 'Недели', day: 'День', days: 'Дни', home: 'Главная' }
-            },
-            ar: {
-                auth: { username: 'اسم المستخدم', password: 'كلمة المرور', age: 'العمر', country: 'الدولة', register: 'تسجيل', login: 'تسجيل الدخول', logout: 'تسجيل الخروج', roleQuestion: 'من أنت؟', iAmMother: 'أنا الأم', iAmRelative: 'أنا قريب', pregnancyStatus: 'حالة الحمل', preparingPregnancy: 'التحضير للحمل', currentlyPregnant: 'حامل الآن', lmp: 'آخر دورة شهرية', firstTime: 'أول مرة تكونين أماً؟', yes: 'نعم', no: 'لا', legal_age_error: 'يجب أن تكون 18 سنة أو أكثر للتسجيل' },
-                nav: { home: 'الرئيسية', calendar: 'التقويم', growth: 'النمو', checkup: 'الفحوصات', diary: 'اليوميات', education: 'تعلم', community: 'المجتمع', ai: 'الذكاء الاصطناعي', help: 'المساعدة', blog: 'مدونة', admin: 'المسؤول' },
-                hero: { title: 'Her Greatness', subtitle: 'رفيقك الكامل للحمل', description: 'دعمك في كل خطوة بحب وعناية وإرشادات خبيرة', cta: 'ابدأ رحلتك' },
-                calendar: { title: 'تقويم الحمل', calculateDueDate: 'احسب التاريخ', yourDueDate: 'تاريخ الولادة', weeksPregnant: 'أسابيع من الحمل', daysUntilDue: 'أيام حتى التاريخ', lmpLabel: 'آخر دورة شهرية' },
-                growth: { title: 'تتبع النمو', subtitle: 'شاهدي طفلك ينمو', selectMonth: 'اختر الشهر', babySize: 'حجم الطفل', length: 'الطول', weight: 'الوزن', development: 'التطور' },
-                diary: { title: 'يوميات المزاج والعادات', mood: 'المزاج', habits: 'العادات اليومية', log: 'السجل', avgMood: 'متوسط المزاج', completion: 'معدل الإنجاز', sleep: 'النوم', exercise: 'التمرين', nutrition: 'التغذية', water: 'الماء', meditation: 'التأمل', energyLevel: 'الطاقة', cravings: 'الرغبات', symptoms: 'الأعراض', notes: 'الملاحظات', moodHistory: 'التاريخ', weeklyTrend: 'الاتجاه الأسبوعي', entries: 'الإدخالات' },
-                community: { title: 'مجتمع الخلاصة', posts: 'المنشورات', comments: 'التعليقات', share: 'شارك قصتك', anonymous: 'انشر بشكل مجهول', createPost: 'إنشاء منشور', like: 'إعجاب', delete: 'حذف', comment: 'تعليق' },
-                ai: { title: 'ذكاء اصطناعي Q&A', subtitle: 'اسأل أي سؤال', responseTone: 'نبرة الرد', teenFriendly: 'صديقة للمراهقين', firstTime: 'الوالد لأول مرة', medicalDetailed: 'التفاصيل الطبية', askQuestion: 'اسأل سؤالك...', getAnswer: 'احصل على إجابة', commonQuestions: 'الأسئلة الشائعة', disclaimer: '⚠️ تحذير طبي مهم' },
-                blog: { title: 'مركز التعلم', forTeens: 'للآباء المراهقين', forFirstTime: 'للوالدين الجدد', general: 'المعرفة العامة', overwhelmed: 'عند الشعور بالإرهاق', reassurance: 'الطمأنينة والدعم', readMore: 'اقرأ أكثر', admin: 'مسؤول المدونة', addBlog: 'أضف مدونة', editBlog: 'تحرير مدونة', deleteBlog: 'حذف مدونة' },
-                common: { save: 'حفظ', cancel: 'إلغاء', submit: 'إرسال', close: 'إغلاق', next: 'التالي', previous: 'السابق', week: 'أسبوع', weeks: 'أسابيع', day: 'يوم', days: 'أيام', home: 'الرئيسية' }
-            },
-            pt: {
-                auth: { username: 'Nome de usuário', password: 'Senha', age: 'Idade', country: 'País', register: 'Registrar', login: 'Entrar', logout: 'Sair', roleQuestion: 'Quem é você?', iAmMother: 'Sou a mãe', iAmRelative: 'Sou um parente', pregnancyStatus: 'Status da gravidez', preparingPregnancy: 'Preparando-se para a gravidez', currentlyPregnant: 'Atualmente Grávida', lmp: 'Última Menstruação', firstTime: 'Primeira mãe?', yes: 'Sim', no: 'Não', legal_age_error: 'Você deve ter 18 anos ou mais para se registrar' },
-                nav: { home: 'Início', calendar: 'Calendário', growth: 'Crescimento', checkup: 'Consultas', diary: 'Diário', education: 'Aprender', community: 'Comunidade', ai: 'IA', help: 'Ajuda', blog: 'Blog', admin: 'Admin' },
-                hero: { title: 'Her Greatness', subtitle: 'Sua Companheira Completa de Gravidez', description: 'Apoiando você em cada passo com amor, cuidado e orientação especializada', cta: 'Comece Sua Jornada' },
-                calendar: { title: 'Calendário de Gravidez', calculateDueDate: 'Calcular Data', yourDueDate: 'Sua Data de Parto', weeksPregnant: 'semanas de gravidez', daysUntilDue: 'dias até o parto', lmpLabel: 'Última Menstruação' },
-                growth: { title: 'Rastreamento de Crescimento', subtitle: 'Veja Seu Bebê Crescer', selectMonth: 'Selecione Mês', babySize: 'Tamanho do Bebê', length: 'Comprimento', weight: 'Peso', development: 'Desenvolvimento' },
-                diary: { title: 'Diário de Humor e Hábitos', mood: 'Humor', habits: 'Hábitos Diários', log: 'Registrar', avgMood: 'Humor Médio', completion: 'Taxa', sleep: 'Sono', exercise: 'Exercício', nutrition: 'Nutrição', water: 'Água', meditation: 'Meditação', energyLevel: 'Energia', cravings: 'Desejos', symptoms: 'Sintomas', notes: 'Anotações', moodHistory: 'Histórico', weeklyTrend: 'Tendência Semanal', entries: 'Entradas' },
-                community: { title: 'Feed da Comunidade', posts: 'Postagens', comments: 'Comentários', share: 'Compartilhe Sua História', anonymous: 'Postar Anonimamente', createPost: 'Criar Postagem', like: 'Curtir', delete: 'Excluir', comment: 'Comentar' },
-                ai: { title: 'IA Q&A', subtitle: 'Faça Qualquer Pergunta', responseTone: 'Tom de Resposta', teenFriendly: 'Amigável para Adolescentes', firstTime: 'Primeiro Pai', medicalDetailed: 'Detalhado Medicamente', askQuestion: 'Faça sua pergunta...', getAnswer: 'Obter Resposta', commonQuestions: 'Perguntas Frequentes', disclaimer: '⚠️ Aviso Médico Importante' },
-                blog: { title: 'Centro de Aprendizado', forTeens: 'Para Pais Adolescentes', forFirstTime: 'Para Primeiro Pai', general: 'Conhecimento Geral', overwhelmed: 'Quando se Sentir Sobrecarregado', reassurance: 'Tranquilização e Apoio', readMore: 'Ler Mais', admin: 'Admin do Blog', addBlog: 'Adicionar Blog', editBlog: 'Editar Blog', deleteBlog: 'Excluir Blog' },
-                common: { save: 'Salvar', cancel: 'Cancelar', submit: 'Enviar', close: 'Fechar', next: 'Próximo', previous: 'Anterior', week: 'Semana', weeks: 'Semanas', day: 'Dia', days: 'Dias', home: 'Início' }
-            },
-            th: {
-                auth: { username: 'ชื่อผู้ใช้', password: 'รหัสผ่าน', age: 'อายุ', country: 'ประเทศ', register: 'ลงทะเบียน', login: 'เข้าสู่ระบบ', logout: 'ออกจากระบบ', roleQuestion: 'คุณคือใคร?', iAmMother: 'ฉันคือแม่', iAmRelative: 'ฉันเป็นญาติ', pregnancyStatus: 'สถานะการตั้งครรภ์', preparingPregnancy: 'กำลังเตรียมตัวสำหรับการตั้งครรภ์', currentlyPregnant: 'ตั้งครรภ์อยู่', lmp: 'ประจำเดือนครั้งสุดท้าย', firstTime: 'เป็นแม่คนแรกหรือ?', yes: 'ใช่', no: 'ไม่ใช่', legal_age_error: 'คุณต้องมีอายุ 18 ปีขึ้นไปเพื่อลงทะเบียน' },
-                nav: { home: 'หน้าแรก', calendar: 'ปฏิทิน', growth: 'การเจริญเติบโต', checkup: 'การตรวจสุขภาพ', diary: 'สมุดบันทึก', education: 'เรียนรู้', community: 'ชุมชน', ai: 'AI', help: 'ความช่วยเหลือ', blog: 'บล็อก', admin: 'ผู้ดูแล' },
-                hero: { title: 'Her Greatness', subtitle: 'เพื่อนร่วมทางการตั้งครรภ์ที่สมบูรณ์ของคุณ', description: 'สนับสนุนคุณในทุกขั้นตอนด้วยความรัก การดูแล และคำแนะนำของผู้เชี่ยวชาญ', cta: 'เริ่มต้นการเดินทางของคุณ' },
-                calendar: { title: 'ปฏิทินการตั้งครรภ์', calculateDueDate: 'คำนวณวันคลอด', yourDueDate: 'วันคลอดของคุณ', weeksPregnant: 'สัปดาห์ตั้งครรภ์', daysUntilDue: 'วันจนถึงวันคลอด', lmpLabel: 'ประจำเดือนครั้งสุดท้าย' },
-                growth: { title: 'ติดตามการเจริญเติบโตของทารก', subtitle: 'ดูทารกของคุณเติบโต', selectMonth: 'เลือกเดือน', babySize: 'ขนาดทารก', length: 'ความยาว', weight: 'น้ำหนัก', development: 'การพัฒนา' },
-                diary: { title: 'สมุดบันทึกอารมณ์และนิสัย', mood: 'อารมณ์', habits: 'นิสัยประจำวัน', log: 'บันทึก', avgMood: 'อารมณ์โดยเฉลี่ย', completion: 'อัตราการเสร็จสิ้น', sleep: 'การนอนหลับ', exercise: 'การออกกำลังกาย', nutrition: 'โภคนาการ', water: 'น้ำ', meditation: 'การสมาธิ', energyLevel: 'พลังงาน', cravings: 'ความต้องการ', symptoms: 'อาการ', notes: 'หมายเหตุ', moodHistory: 'ประวัติ', weeklyTrend: 'แนวโน้มรายสัปดาห์', entries: 'รายการ' },
-                community: { title: 'ฟีดชุมชน', posts: 'โพสต์', comments: 'ความเห็น', share: 'แชร์เรื่องราวของคุณ', anonymous: 'โพสต์แบบไม่ระบุตัวตน', createPost: 'สร้างโพสต์', like: 'ถูกใจ', delete: 'ลบ', comment: 'ความเห็น' },
-                ai: { title: 'ไอคิวแอนด์เอ', subtitle: 'ถามคำถามใดก็ได้', responseTone: 'นโยบายการตอบสนอง', teenFriendly: 'เป็นมิตรต่อวัยรุ่น', firstTime: 'ผู้ปกครองคนแรก', medicalDetailed: 'รายละเอียดทางการแพทย์', askQuestion: 'ถามคำถามของคุณ...', getAnswer: 'รับคำตอบ', commonQuestions: 'คำถามที่พบบ่อย', disclaimer: '⚠️ ข้อมูลแพทย์ที่สำคัญ' },
-                blog: { title: 'ศูนย์การเรียนรู้', forTeens: 'สำหรับพ่อแม่วัยรุ่น', forFirstTime: 'สำหรับพ่อแม่เป็นครั้งแรก', general: 'ความรู้ทั่วไป', overwhelmed: 'เมื่อรู้สึกท่วมท้น', reassurance: 'การสร้างความมั่นใจและการสนับสนุน', readMore: 'อ่านเพิ่มเติม', admin: 'ผู้ดูแลระบบบล็อก', addBlog: 'เพิ่มบล็อก', editBlog: 'แก้ไขบล็อก', deleteBlog: 'ลบบล็อก' },
-                common: { save: 'บันทึก', cancel: 'ยกเลิก', submit: 'ส่ง', close: 'ปิด', next: 'ถัดไป', previous: 'ก่อนหน้า', week: 'สัปดาห์', weeks: 'สัปดาห์', day: 'วัน', days: 'วัน', home: 'หน้าแรก' }
-            }
-        };
+    <div id="app"></div>
 
-        // ============ FRUIT BABY MONTHS DATA ============
-        const babyMonths = [
-            { month: 1, fruit: 'Red Currant', color: '#C41E3A', emoji: '🔴', length: '0.5cm', weight: '<1g' },
-            { month: 2, fruit: 'Cherry', color: '#8B0000', emoji: '🍒', length: '2.4cm', weight: '2g' },
-            { month: 3, fruit: 'Plum', color: '#4B0082', emoji: '🍑', length: '7.5cm', weight: '23g' },
-            { month: 4, fruit: 'Pear', color: '#99CC00', emoji: '🍐', length: '15cm', weight: '100g' },
-            { month: 5, fruit: 'Grapefruit', color: '#FF9900', emoji: '🍊', length: '25cm', weight: '300g' },
-            { month: 6, fruit: 'Papaya', color: '#90EE90', emoji: '🥭', length: '30cm', weight: '600g' },
-            { month: 7, fruit: 'Pineapple', color: '#FFD700', emoji: '🍍', length: '35cm', weight: '900g' },
-            { month: 8, fruit: 'Cantaloupe', color: '#FFA500', emoji: '🍈', length: '40cm', weight: '1500g' },
-            { month: 9, fruit: 'Watermelon', color: '#228B22', emoji: '🍉', length: '45cm', weight: '2300g' }
-        ];
-
-        // ============ FRUIT BABY SVG ============
-        function BabyFruitIllustration({ month }) {
-            const data = babyMonths[month - 1] || babyMonths[4];
-            const scale = 1 + (month / 9) * 0.5;
+    <script>
+        // Simple state management
+        const app = {
+            isLoggedIn: localStorage.getItem('currentUser') ? true : false,
+            currentPage: 'home',
+            language: localStorage.getItem('language') || 'en',
+            userProfile: localStorage.getItem('currentUser') ? JSON.parse(localStorage.getItem('currentUser')) : null,
             
-            return (
-                <svg viewBox="0 0 300 400" width="100%" height="300" style={{ maxWidth: '280px' }}>
-                    {/* Womb */}
-                    <ellipse cx="150" cy="200" rx={80 + month * 8} ry={120 + month * 10} fill="#FFE4F0" opacity="0.5" stroke="#FFB6D9" strokeWidth="2"/>
-                    
-                    {/* Fruit container */}
-                    <ellipse cx="150" cy="150" rx={50 + month * 4} ry={70 + month * 6} fill={data.color} opacity="0.7"/>
-                    
-                    {/* Inner darker layer */}
-                    <ellipse cx="150" cy="150" rx={45 + month * 3.5} ry={65 + month * 5.5} fill={data.color} opacity="0.9"/>
-                    
-                    {/* Baby inside - grows with months */}
-                    {month >= 1 && (
-                        <g>
-                            {/* Head */}
-                            <circle cx="150" cy={130} r={15 * scale} fill="#F4A08F" opacity="0.8"/>
+            render: function() {
+                const html = this.isLoggedIn ? this.getMainApp() : this.getAuthPage();
+                document.getElementById('app').innerHTML = html;
+                this.attachEventListeners();
+            },
+
+            getAuthPage: function() {
+                const t = translations[this.language];
+                return `
+                    <div class="min-h-screen flex items-center justify-center px-6">
+                        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+                            <div class="text-center mb-8">
+                                <div class="text-5xl mb-4">👶</div>
+                                <h1 class="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">Her Greatness</h1>
+                                <p class="text-gray-600 mt-2">${t.hero.subtitle}</p>
+                            </div>
                             
-                            {/* Body */}
-                            {month >= 2 && (
-                                <ellipse cx="150" cy={160} rx={12 * scale} ry={20 * scale} fill="#F4A08F" opacity="0.8"/>
-                            )}
-                            
-                            {/* Arms */}
-                            {month >= 3 && (
-                                <>
-                                    <ellipse cx={125} cy={155} rx={5 * scale} ry={15 * scale} fill="#F4A08F" opacity="0.7"/>
-                                    <ellipse cx={175} cy={155} rx={5 * scale} ry={15 * scale} fill="#F4A08F" opacity="0.7"/>
-                                </>
-                            )}
-                            
-                            {/* Legs */}
-                            {month >= 4 && (
-                                <>
-                                    <ellipse cx={135} cy={185} rx={5 * scale} ry={18 * scale} fill="#F4A08F" opacity="0.7"/>
-                                    <ellipse cx={165} cy={185} rx={5 * scale} ry={18 * scale} fill="#F4A08F" opacity="0.7"/>
-                                </>
-                            )}
-                            
-                            {/* Eyes */}
-                            {month >= 2 && (
-                                <>
-                                    <circle cx={145} cy={125} r={2 * scale} fill="#333"/>
-                                    <circle cx={155} cy={125} r={2 * scale} fill="#333"/>
-                                </>
-                            )}
-                        </g>
-                    )}
-                    
-                    {/* Stem */}
-                    <g>
-                        <rect x="145" y="60" width="10" height="30" fill="#6B4423" rx="2"/>
-                        <ellipse cx="148" cy="50" rx="12" ry="8" fill="#228B22"/>
-                        <ellipse cx="155" cy="52" rx="10" ry="7" fill="#32CD32"/>
-                    </g>
-                </svg>
-            );
-        }
-
-        // ============ AI Q&A COMPONENT ============
-        function AIQnAComponent({ t, userProfile }) {
-            const [question, setQuestion] = useState('');
-            const [tone, setTone] = useState('firstTime');
-            const [answer, setAnswer] = useState(null);
-
-            const commonQuestions = [
-                { q: 'Is morning sickness normal during pregnancy?', a: { teenFriendly: 'Yeah, morning sickness is super common! Like, most pregnant people feel nauseous, especially in the first few months. It usually gets better after the first trimester. If you\'re feeling really sick or can\'t keep food down, definitely tell your doctor.', firstTime: 'Yes, morning sickness is very common during pregnancy. Most people experience some nausea, especially in the first trimester. While it\'s usually not dangerous, stay hydrated and eat small frequent meals. Contact your healthcare provider if you\'re unable to keep food down.', medicalDetailed: 'Nausea and vomiting in pregnancy (hyperemesis gravidarum when severe) affects 70-80% of pregnant individuals. Thought to be related to increased hCG levels, progesterone, and GI changes. Typically resolves by week 14-16. Vitamin B6 (50mg daily) and ginger may provide relief. Seek medical attention if unable to maintain hydration.' }),
-                { q: 'What symptoms should concern me?', a: { teenFriendly: 'You should definitely call your doctor or go to the hospital if you have: severe pain, heavy bleeding, fainting, vision changes, or chest pain. Don\'t wait - just reach out!', firstTime: 'Contact your healthcare provider immediately if you experience: severe abdominal pain, heavy vaginal bleeding, sudden swelling in face/hands, severe headaches, vision changes, or difficulty breathing. For true emergencies, call 911.', medicalDetailed: 'Red flag symptoms requiring immediate evaluation: vaginal hemorrhage >20 mL, severe abdominal pain, syncope, preeclampsia symptoms (SBP >160, DBP >110, proteinuria), signs of preterm labor (regular contractions <37wks), chest pain/dyspnea, or signs of infection (fever >38.5C).' }),
-                { q: 'How much weight should I gain?', a: { teenFriendly: 'Most people gain between 25-35 pounds, but it depends on your starting weight. Don\'t stress too much about the number - focus on eating healthy foods and moving your body.', firstTime: 'Weight gain recommendations depend on your pre-pregnancy BMI: Underweight (BMI <18.5) should gain 28-40 lbs, normal weight (18.5-24.9) gain 25-35 lbs, overweight gain 15-25 lbs, obese gain 11-20 lbs. These are guidelines, not strict rules.', medicalDetailed: 'IOM guidelines for weight gain by pre-pregnancy BMI: Underweight 28-40 lbs (12.5-18kg), normal 25-35 lbs (11.5-16kg), overweight 15-25 lbs (7-11.5kg), obese ≤20 lbs (≤9kg). Excess weight gain associated with GDM, preeclampsia, and increased cesarean delivery rates. Pattern matters more than total.' }),
-                { q: 'When will I feel baby movements?', a: { teenFriendly: 'You might start feeling little flutters around 16-20 weeks if it\'s your first pregnancy - it feels like bubbles! Second pregnancies sometimes feel it earlier. Everyone\'s different though!', firstTime: 'First-time mothers typically feel fetal movements (quickening) between 18-25 weeks. It may feel like butterflies, bubbles, or gentle kicks. You may notice movements more when resting. Keep track of fetal movement patterns and notify your provider if there\'s a significant decrease.', medicalDetailed: 'Quickening typically occurs 16-25 weeks primigravida, earlier in multipara. Initial movements may be subtle and intermittent. By 3rd trimester, establish baseline fetal movement pattern. Count-to-10 method: time taken to feel 10 movements; if >2 hours consult provider to rule out fetal compromise.' })
-            ];
-
-            const getAnswer = () => {
-                if (!question.trim()) return;
-                
-                const found = commonQuestions.find(item => 
-                    question.toLowerCase().includes(item.q.toLowerCase().split(' ').slice(0, 3).join(' '))
-                );
-                
-                if (found) {
-                    setAnswer({
-                        question: found.q,
-                        answer: found.a[tone]
-                    });
-                } else {
-                    setAnswer({
-                        question: question,
-                        answer: tone === 'teenFriendly' ? 'That\'s a great question! For specific medical advice, please consult your healthcare provider.' : tone === 'firstTime' ? 'This is an important question. Please discuss this with your healthcare provider for personalized guidance.' : 'For detailed medical information on this topic, please consult with your healthcare provider or review medical literature.'
-                    });
-                }
-            };
-
-            return (
-                <div className="space-y-6">
-                    {/* Medical Disclaimer */}
-                    <div className="bg-red-50 border-l-4 border-red-600 p-6 rounded">
-                        <p className="font-bold text-red-800 mb-3">{t.ai.disclaimer}</p>
-                        <ul className="text-sm text-red-700 space-y-1 ml-4 list-disc">
-                            <li>Medical advice, diagnosis, or treatment</li>
-                            <li>Unusual symptoms or concerns</li>
-                            <li>Changes in your pregnancy</li>
-                            <li>Emergency situations (call 911)</li>
-                        </ul>
-                    </div>
-
-                    {/* Tone Selector */}
-                    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">{t.ai.responseTone}</label>
-                        <div className="grid grid-cols-3 gap-3">
-                            <button
-                                onClick={() => setTone('teenFriendly')}
-                                className={`p-3 rounded-lg transition ${tone === 'teenFriendly' ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                            >
-                                {t.ai.teenFriendly}
-                            </button>
-                            <button
-                                onClick={() => setTone('firstTime')}
-                                className={`p-3 rounded-lg transition ${tone === 'firstTime' ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                            >
-                                {t.ai.firstTime}
-                            </button>
-                            <button
-                                onClick={() => setTone('medicalDetailed')}
-                                className={`p-3 rounded-lg transition ${tone === 'medicalDetailed' ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                            >
-                                {t.ai.medicalDetailed}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Question Input */}
-                    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                placeholder={t.ai.askQuestion}
-                                value={question}
-                                onChange={(e) => setQuestion(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && getAnswer()}
-                                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                            />
-                            <button
-                                onClick={getAnswer}
-                                className="bg-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-600 transition"
-                            >
-                                {t.ai.getAnswer}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Answer Display */}
-                    {answer && (
-                        <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-6 border border-pink-200 shadow-md fade-in">
-                            <p className="font-semibold text-gray-800 mb-3">Q: {answer.question}</p>
-                            <p className="text-gray-700 leading-relaxed">{answer.answer}</p>
-                        </div>
-                    )}
-
-                    {/* Common Questions */}
-                    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                        <h3 className="font-semibold text-gray-800 mb-4">{t.ai.commonQuestions}</h3>
-                        <div className="space-y-2">
-                            {commonQuestions.map((item, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        setQuestion(item.q);
-                                        setAnswer({ question: item.q, answer: item.a[tone] });
-                                    }}
-                                    className="w-full text-left p-3 bg-gray-50 hover:bg-pink-50 rounded-lg transition border border-gray-200 hover:border-pink-300"
-                                >
-                                    <p className="text-sm text-gray-700">❓ {item.q}</p>
+                            <div class="space-y-4">
+                                <button onclick="app.goToRegister()" class="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition">
+                                    ${t.auth.register}
                                 </button>
-                            ))}
+                                <button onclick="app.goToLogin()" class="w-full bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-600 transition">
+                                    ${t.auth.login}
+                                </button>
+                                <div class="pt-4 border-t border-gray-200">
+                                    <label class="text-sm text-gray-600">Language:</label>
+                                    <select onchange="app.changeLanguage(this.value)" class="w-full px-3 py-2 border border-gray-300 rounded-lg mt-2 text-sm">
+                                        ${Object.keys(translations).map(lang => `<option value="${lang}" ${this.language === lang ? 'selected' : ''}>${lang.toUpperCase()}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            );
-        }
+                `;
+            },
 
-        // ============ ENHANCED DIARY COMPONENT ============
-        function EnhancedDiaryComponent({ t }) {
-            const [mood, setMood] = useState('');
-            const [energy, setEnergy] = useState(3);
-            const [symptoms, setSymptoms] = useState('');
-            const [notes, setNotes] = useState('');
-            const [habits, setHabits] = useState({
-                sleep: false, exercise: false, nutrition: false, water: false, meditation: false
-            });
-            const [entries, setEntries] = useState(() => {
-                const saved = localStorage.getItem('diaryEntries');
-                return saved ? JSON.parse(saved) : [];
-            });
+            getMainApp: function() {
+                const t = translations[this.language];
+                let content = '';
 
-            const moodEmojis = { happy: '😊', okay: '😐', sad: '😢', excited: '🤩', anxious: '😰' };
+                if (this.currentPage === 'home') content = this.getHomePage();
+                else if (this.currentPage === 'growth') content = this.getGrowthPage();
+                else if (this.currentPage === 'diary') content = this.getDiaryPage();
+                else if (this.currentPage === 'community') content = this.getCommunityPage();
+                else if (this.currentPage === 'ai') content = this.getAIPage();
+                else if (this.currentPage === 'blog') content = this.getBlogPage();
+                else if (this.currentPage === 'calendar') content = this.getCalendarPage();
 
-            const saveEntry = () => {
-                if (mood) {
-                    const entry = {
-                        id: Date.now(),
-                        date: new Date().toLocaleDateString(),
-                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        mood,
-                        energy,
-                        symptoms,
-                        notes,
-                        habits: Object.keys(habits).filter(h => habits[h]),
-                        completed: Object.keys(habits).filter(h => habits[h]).length
-                    };
-                    const updated = [entry, ...entries];
-                    setEntries(updated);
-                    localStorage.setItem('diaryEntries', JSON.stringify(updated));
-                    setMood('');
-                    setEnergy(3);
-                    setSymptoms('');
-                    setNotes('');
-                    setHabits({ sleep: false, exercise: false, nutrition: false, water: false, meditation: false });
-                }
-            };
-
-            const avgMood = entries.length > 0 ? (
-                (entries.reduce((sum, e) => sum + (e.mood === 'happy' ? 5 : e.mood === 'excited' ? 5 : e.mood === 'okay' ? 3 : e.mood === 'anxious' ? 2 : 1), 0) / entries.length * 20).toFixed(0)
-            ) : 0;
-
-            const weeklyEntries = entries.slice(0, 7);
-
-            return (
-                <div className="space-y-6">
-                    {/* Stats Dashboard */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-gradient-to-br from-pink-100 to-pink-50 rounded-lg p-4 text-center border border-pink-200">
-                            <div className="text-3xl font-bold text-pink-600">{avgMood}%</div>
-                            <div className="text-xs text-gray-600 mt-1">{t.diary.avgMood}</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg p-4 text-center border border-purple-200">
-                            <div className="text-3xl font-bold text-purple-600">{entries.length}</div>
-                            <div className="text-xs text-gray-600 mt-1">{t.diary.entries}</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg p-4 text-center border border-blue-200">
-                            <div className="text-3xl font-bold text-blue-600">{weeklyEntries.length}</div>
-                            <div className="text-xs text-gray-600 mt-1">{t.diary.weeklyTrend}</div>
-                        </div>
-                    </div>
-
-                    {/* Entry Form */}
-                    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                        <h3 className="font-semibold text-gray-800 mb-4">New Entry</h3>
-                        
-                        {/* Mood Selector */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">{t.diary.mood}</label>
-                            <div className="flex gap-2">
-                                {Object.keys(moodEmojis).map(m => (
-                                    <button
-                                        key={m}
-                                        onClick={() => setMood(m)}
-                                        className={`flex-1 py-3 rounded-lg transition text-2xl ${
-                                            mood === m ? 'bg-pink-500 text-white ring-2 ring-pink-700' : 'bg-gray-100 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        {moodEmojis[m]}
+                return `
+                    <nav class="bg-white shadow-sm sticky top-0 z-50 mb-8">
+                        <div class="max-w-7xl mx-auto px-6 py-4">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">👶</span>
+                                    <h1 class="text-xl font-bold text-pink-600">Her Greatness</h1>
+                                    <span class="text-xs text-gray-500 ml-4">${this.userProfile.username}</span>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <select onchange="app.changeLanguage(this.value)" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        ${Object.keys(translations).map(lang => `<option value="${lang}" ${this.language === lang ? 'selected' : ''}>${lang.toUpperCase()}</option>`).join('')}
+                                    </select>
+                                    <button onclick="app.logout()" class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition text-sm">Logout</button>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 flex-wrap mt-4">
+                                ${['home', 'calendar', 'growth', 'diary', 'community', 'ai', 'blog'].map(page => `
+                                    <button onclick="app.goToPage('${page}')" class="px-4 py-2 rounded-lg text-sm transition ${this.currentPage === page ? 'bg-pink-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">
+                                        ${translations[this.language].nav[page]}
                                     </button>
-                                ))}
+                                `).join('')}
+                            </div>
+                        </div>
+                    </nav>
+
+                    <div class="max-w-7xl mx-auto px-6 pb-16">
+                        ${content}
+                    </div>
+
+                    <footer class="bg-gray-900 text-white py-8 mt-16">
+                        <div class="max-w-7xl mx-auto px-6 text-center">
+                            <p class="text-gray-400">© 2024 Her Greatness. Supporting mothers everywhere. ❤️</p>
+                        </div>
+                    </footer>
+                `;
+            },
+
+            getHomePage: function() {
+                const t = translations[this.language];
+                return `
+                    <div class="text-center py-12 fade-in">
+                        <h2 class="text-5xl font-bold text-gray-900 mb-4">${t.hero.title}</h2>
+                        <p class="text-xl text-gray-600 mb-8">${t.hero.description}</p>
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div class="bg-white rounded-lg p-6 shadow-md border border-pink-100">
+                                <div class="text-4xl mb-3">📅</div>
+                                <h3 class="font-semibold text-gray-800">Pregnancy Calendar</h3>
+                                <p class="text-sm text-gray-600 mt-2">Track your journey week by week</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-6 shadow-md border border-purple-100">
+                                <div class="text-4xl mb-3">📔</div>
+                                <h3 class="font-semibold text-gray-800">Mood Diary</h3>
+                                <p class="text-sm text-gray-600 mt-2">Track feelings and habits</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-6 shadow-md border border-blue-100">
+                                <div class="text-4xl mb-3">👥</div>
+                                <h3 class="font-semibold text-gray-800">Community</h3>
+                                <p class="text-sm text-gray-600 mt-2">Connect with other mothers</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getCalendarPage: function() {
+                const t = translations[this.language];
+                return `
+                    <div class="bg-white rounded-lg p-8 shadow-md fade-in">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-6">${t.calendar.title}</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Last Menstrual Period</label>
+                                <input type="date" id="lmpDate" onchange="app.calculateWeek()" class="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500">
+                            </div>
+                            <div id="weekDisplay"></div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getGrowthPage: function() {
+                const t = translations[this.language];
+                return `
+                    <div class="space-y-8 fade-in">
+                        <div class="text-center">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-2">${t.growth.title}</h2>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-8 shadow-md">
+                                <div id="babyFruit" style="min-height: 300px;"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="bg-white rounded-lg p-6 shadow-md">
+                                    <label class="block text-sm font-semibold mb-4">Select Month</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        ${[1,2,3,4,5,6,7,8,9].map(m => `
+                                            <button onclick="app.selectMonth(${m})" class="p-2 rounded transition font-semibold bg-gray-100 hover:bg-pink-200 text-gray-700">
+                                                M${m}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-lg p-6 shadow-md">
+                                    <p id="fruitEmoji" class="text-4xl mb-3">🍌</p>
+                                    <p id="fruitName" class="text-2xl font-bold text-pink-600">Papaya</p>
+                                    <div class="mt-4 pt-4 border-t border-gray-200">
+                                        <p class="text-sm text-gray-600">Length: <span id="fruitLength" class="font-semibold">30cm</span></p>
+                                        <p class="text-sm text-gray-600">Weight: <span id="fruitWeight" class="font-semibold">600g</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getDiaryPage: function() {
+                const t = translations[this.language];
+                const entries = JSON.parse(localStorage.getItem('diaryEntries') || '[]');
+                return `
+                    <div class="space-y-6 fade-in">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-gradient-to-br from-pink-100 to-pink-50 rounded-lg p-4 text-center border border-pink-200">
+                                <div class="text-3xl font-bold text-pink-600">${entries.length}</div>
+                                <div class="text-xs text-gray-600 mt-1">Total Entries</div>
+                            </div>
+                            <div class="bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg p-4 text-center border border-purple-200">
+                                <div class="text-3xl font-bold text-purple-600">${entries.slice(0,7).length}</div>
+                                <div class="text-xs text-gray-600 mt-1">This Week</div>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg p-4 text-center border border-blue-200">
+                                <div class="text-3xl font-bold text-blue-600">😊</div>
+                                <div class="text-xs text-gray-600 mt-1">Keep it up!</div>
                             </div>
                         </div>
 
-                        {/* Energy Level */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t.diary.energyLevel}: {energy}/5</label>
-                            <input
-                                type="range"
-                                min="1"
-                                max="5"
-                                value={energy}
-                                onChange={(e) => setEnergy(parseInt(e.target.value))}
-                                className="w-full h-2 bg-pink-200 rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
+                        <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                            <h3 class="font-semibold text-gray-800 mb-4">New Entry</h3>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">How are you feeling?</label>
+                                <div class="flex gap-2">
+                                    ${['😊', '😐', '😢', '🤩', '😰'].map((emoji, idx) => `
+                                        <button onclick="app.setMood('${emoji}')" class="flex-1 py-3 rounded-lg transition text-2xl bg-gray-100 hover:bg-pink-200">
+                                            ${emoji}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
 
-                        {/* Symptoms */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t.diary.symptoms}</label>
-                            <textarea
-                                placeholder="e.g., nausea, back pain, fatigue..."
-                                value={symptoms}
-                                onChange={(e) => setSymptoms(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 h-20"
-                            />
-                        </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Energy Level: <span id="energyValue">3</span>/5</label>
+                                <input type="range" min="1" max="5" value="3" id="energyLevel" class="w-full h-2 bg-pink-200 rounded-lg cursor-pointer">
+                            </div>
 
-                        {/* Habits Checklist */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">{t.diary.habits}</label>
-                            <div className="space-y-2">
-                                {Object.keys(habits).map(habit => (
-                                    <label key={habit} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded">
-                                        <input
-                                            type="checkbox"
-                                            checked={habits[habit]}
-                                            onChange={(e) => setHabits({...habits, [habit]: e.target.checked})}
-                                            className="w-5 h-5 text-pink-600 rounded"
-                                        />
-                                        <span className="text-gray-700 capitalize">{t.diary[habit] || habit}</span>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Symptoms</label>
+                                <textarea id="symptoms" placeholder="E.g., nausea, back pain..." class="w-full p-3 border border-gray-300 rounded-lg h-16"></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">Daily Habits</label>
+                                ${['sleep', 'exercise', 'nutrition', 'water', 'meditation'].map(habit => `
+                                    <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                                        <input type="checkbox" id="habit-${habit}" class="w-5 h-5 text-pink-600 rounded">
+                                        <span class="text-gray-700 capitalize">${habit}</span>
                                     </label>
-                                ))}
+                                `).join('')}
                             </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                                <textarea id="notes" placeholder="How are you feeling today?" class="w-full p-3 border border-gray-300 rounded-lg h-16"></textarea>
+                            </div>
+
+                            <button onclick="app.saveDiaryEntry()" class="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                                Save Entry
+                            </button>
                         </div>
 
-                        {/* Notes */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">{t.diary.notes}</label>
-                            <textarea
-                                placeholder="How are you feeling today?"
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500 h-20"
-                            />
-                        </div>
-
-                        <button
-                            onClick={saveEntry}
-                            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition"
-                        >
-                            {t.common.save}
-                        </button>
-                    </div>
-
-                    {/* Recent Entries */}
-                    {entries.length > 0 && (
-                        <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                            <h3 className="font-semibold text-gray-800 mb-4">Recent Entries ({entries.length})</h3>
-                            <div className="space-y-3 max-h-96 overflow-y-auto">
-                                {entries.slice(0, 10).map((entry) => (
-                                    <div key={entry.id} className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <p className="font-semibold text-gray-800">{entry.date} {entry.time}</p>
-                                                <p className="text-lg">{moodEmojis[entry.mood]}</p>
-                                            </div>
-                                            <span className="text-sm bg-pink-200 text-pink-800 px-2 py-1 rounded">Energy: {entry.energy}/5</span>
+                        ${entries.length > 0 ? `
+                            <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                                <h3 class="font-semibold text-gray-800 mb-4">Recent Entries (${entries.length})</h3>
+                                <div class="space-y-3 max-h-96 overflow-y-auto">
+                                    ${entries.slice(0, 5).map(entry => `
+                                        <div class="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
+                                            <p class="font-semibold text-gray-800">${entry.date}</p>
+                                            <p class="text-lg">${entry.mood}</p>
+                                            ${entry.symptoms ? `<p class="text-sm text-gray-600">Symptoms: ${entry.symptoms}</p>` : ''}
                                         </div>
-                                        {entry.symptoms && <p className="text-sm text-gray-600 mb-1">Symptoms: {entry.symptoms}</p>}
-                                        {entry.notes && <p className="text-sm text-gray-600 mb-1">Notes: {entry.notes}</p>}
-                                        {entry.habits.length > 0 && (
-                                            <p className="text-xs text-gray-500">✓ {entry.habits.join(', ')}</p>
-                                        )}
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            },
+
+            getCommunityPage: function() {
+                const t = translations[this.language];
+                const posts = JSON.parse(localStorage.getItem('communityPosts') || '[]');
+                return `
+                    <div class="bg-white rounded-lg p-8 shadow-md fade-in">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-6">Community Feed</h2>
+                        
+                        <div class="mb-6 space-y-3">
+                            <input type="text" id="postTitle" placeholder="Post title..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500">
+                            <textarea id="postContent" placeholder="Share your thoughts..." class="w-full px-4 py-2 border border-gray-300 rounded-lg h-24 focus:outline-none focus:border-pink-500"></textarea>
+                            <button onclick="app.createPost()" class="w-full bg-pink-500 text-white py-2 rounded-lg font-semibold hover:bg-pink-600 transition">
+                                Create Post
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            ${posts.length === 0 ? '<p class="text-gray-500 text-center py-8">No posts yet. Be the first to share!</p>' : ''}
+                            ${posts.map((post, idx) => `
+                                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p class="font-semibold text-gray-800">${post.title}</p>
+                                    <p class="text-gray-700 text-sm mt-1">${post.content}</p>
+                                    <div class="flex justify-between items-center mt-3">
+                                        <p class="text-xs text-gray-500">Anonymous • ${post.date}</p>
+                                        <button onclick="app.deletePost(${idx})" class="text-red-500 hover:text-red-700 text-xs">Delete</button>
                                     </div>
-                                ))}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            getAIPage: function() {
+                const t = translations[this.language];
+                return `
+                    <div class="bg-white rounded-lg p-8 shadow-md fade-in">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-6">AI Q&A</h2>
+                        
+                        <div class="bg-red-50 border-l-4 border-red-600 p-6 rounded mb-6">
+                            <p class="font-bold text-red-800 mb-3">⚠️ Important Medical Disclaimer</p>
+                            <ul class="text-sm text-red-700 space-y-1 list-disc list-inside">
+                                <li>Medical advice, diagnosis, or treatment</li>
+                                <li>Unusual symptoms or concerns</li>
+                                <li>Changes in your pregnancy</li>
+                                <li>Emergency situations (call 911)</li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-6 space-y-3">
+                            <input type="text" id="aiQuestion" placeholder="Ask your question..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500">
+                            <button onclick="app.getAIAnswer()" class="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition">
+                                Get Answer
+                            </button>
+                        </div>
+
+                        <div id="aiAnswer" class="mb-6"></div>
+
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="font-semibold text-gray-800 mb-3">Common Questions</h3>
+                            <div class="space-y-2">
+                                <button onclick="app.askQuestion('Is morning sickness normal?')" class="w-full text-left p-3 bg-white hover:bg-pink-50 rounded-lg border border-gray-200 transition text-sm">❓ Is morning sickness normal during pregnancy?</button>
+                                <button onclick="app.askQuestion('What symptoms should concern me?')" class="w-full text-left p-3 bg-white hover:bg-pink-50 rounded-lg border border-gray-200 transition text-sm">❓ What symptoms should concern me?</button>
+                                <button onclick="app.askQuestion('How much weight should I gain?')" class="w-full text-left p-3 bg-white hover:bg-pink-50 rounded-lg border border-gray-200 transition text-sm">❓ How much weight should I gain?</button>
+                                <button onclick="app.askQuestion('When will I feel baby movements?')" class="w-full text-left p-3 bg-white hover:bg-pink-50 rounded-lg border border-gray-200 transition text-sm">❓ When will I feel baby movements?</button>
                             </div>
                         </div>
-                    )}
-                </div>
-            );
-        }
-
-        // ============ AUTH & MAIN APP ============
-        function App() {
-            const [isLoggedIn, setIsLoggedIn] = useState(() => {
-                const saved = localStorage.getItem('currentUser');
-                return !!saved;
-            });
-            const [currentPage, setCurrentPage] = useState('home');
-            const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
-            const [userProfile, setUserProfile] = useState(() => {
-                const saved = localStorage.getItem('currentUser');
-                return saved ? JSON.parse(saved) : null;
-            });
-            const [showAuth, setShowAuth] = useState(!isLoggedIn);
-
-            const t = translations[language] || translations.en;
-
-            useEffect(() => {
-                localStorage.setItem('language', language);
-            }, [language]);
-
-            const handleLogout = () => {
-                localStorage.removeItem('currentUser');
-                setIsLoggedIn(false);
-                setUserProfile(null);
-                setShowAuth(true);
-                setCurrentPage('home');
-            };
-
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
-                    {/* Navigation */}
-                    {isLoggedIn && (
-                        <nav className="bg-white shadow-sm sticky top-0 z-50">
-                            <div className="max-w-7xl mx-auto px-6 py-4">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="text-2xl">👶</div>
-                                        <h1 className="text-xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-                                            Her Greatness
-                                        </h1>
-                                        {userProfile && (
-                                            <span className="text-sm text-gray-600 ml-4">Welcome, {userProfile.username}!</span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <select
-                                            value={language}
-                                            onChange={(e) => setLanguage(e.target.value)}
-                                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
-                                        >
-                                            {Object.keys(translations).map(lang => (
-                                                <option key={lang} value={lang}>{lang.toUpperCase()}</option>
-                                            ))}
-                                        </select>
-                                        <button
-                                            onClick={handleLogout}
-                                            className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                        >
-                                            {t.auth.logout}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2 flex-wrap">
-                                    {['home', 'calendar', 'growth', 'diary', 'community', 'blog', 'ai', userProfile?.isAdmin ? 'admin' : null].filter(Boolean).map(page => (
-                                        <button
-                                            key={page}
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`px-4 py-2 rounded-lg transition text-sm ${
-                                                currentPage === page
-                                                    ? 'bg-pink-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            {t.nav[page]}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </nav>
-                    )}
-
-                    {/* Content */}
-                    <div className="max-w-7xl mx-auto px-6 py-12">
-                        {showAuth && !isLoggedIn ? (
-                            <AuthComponent
-                                t={t}
-                                onLoginSuccess={(profile) => {
-                                    setUserProfile(profile);
-                                    setIsLoggedIn(true);
-                                    setShowAuth(false);
-                                    setCurrentPage('home');
-                                }}
-                            />
-                        ) : isLoggedIn ? (
-                            <>
-                                {currentPage === 'home' && <HomePageComponent t={t} userProfile={userProfile} onNavigate={setCurrentPage} />}
-                                {currentPage === 'calendar' && <CalendarComponent t={t} userProfile={userProfile} />}
-                                {currentPage === 'growth' && <GrowthComponent t={t} userProfile={userProfile} />}
-                                {currentPage === 'diary' && <div className="bg-white rounded-lg p-8 shadow-md"><EnhancedDiaryComponent t={t} /></div>}
-                                {currentPage === 'community' && <CommunityComponent t={t} userProfile={userProfile} />}
-                                {currentPage === 'blog' && <BlogComponent t={t} userProfile={userProfile} />}
-                                {currentPage === 'ai' && <div className="bg-white rounded-lg p-8 shadow-md"><AIQnAComponent t={t} userProfile={userProfile} /></div>}
-                                {currentPage === 'admin' && userProfile?.isAdmin && <AdminPanelComponent t={t} />}
-                            </>
-                        ) : null}
                     </div>
+                `;
+            },
 
-                    {/* Footer */}
-                    {isLoggedIn && (
-                        <footer className="bg-gray-900 text-white py-8 mt-16">
-                            <div className="max-w-7xl mx-auto px-6 text-center">
-                                <p className="text-gray-400">© 2024 Her Greatness. Supporting mothers everywhere. ❤️</p>
-                            </div>
-                        </footer>
-                    )}
-                </div>
-            );
-        }
+            getBlogPage: function() {
+                const blogs = JSON.parse(localStorage.getItem('blogs') || '[]');
+                const defaultBlogs = [
+                    { id: 1, category: 'forFirstTime', title: 'First Trimester Tips', content: 'The first trimester is exciting and challenging. Stay hydrated, rest when you need to, and dont hesitate to reach out for support. Every pregnancy is different!' },
+                    { id: 2, category: 'general', title: 'Nutrition During Pregnancy', content: 'Eating well is crucial for your baby\'s development. Focus on whole foods, plenty of fruits and vegetables, lean proteins, and adequate calcium. Consult your doctor about prenatal vitamins.' },
+                    { id: 3, category: 'forTeens', title: 'Being a Teen Mom is Brave', content: 'You\'re stronger than you think. Pregnancy at a young age is challenging, but you have support around you. Connect with other teen moms and never hesitate to ask for help.' },
+                    { id: 4, category: 'overwhelmed', title: 'When Everything Feels Too Much', content: 'It\'s okay to feel overwhelmed. Pregnancy emotions are real and valid. Take time for yourself, practice breathing exercises, and remember that asking for help is a sign of strength.' },
+                    { id: 5, category: 'reassurance', title: 'You\'re Doing Great', content: 'Take a moment to appreciate yourself. Every day you\'re creating life and preparing to be a mother. Celebrate your progress, trust your body, and know that you\'re enough.' }
+                ];
+                
+                const allBlogs = blogs.length > 0 ? blogs : defaultBlogs;
 
-        // ============ AUTH COMPONENT ============
-        function AuthComponent({ t, onLoginSuccess }) {
-            const [step, setStep] = useState('choice'); // choice, register, login, role, status, firstTime, intro
-            const [username, setUsername] = useState('');
-            const [password, setPassword] = useState('');
-            const [age, setAge] = useState('');
-            const [country, setCountry] = useState('');
-            const [userRole, setUserRole] = useState('');
-            const [pregnancyStatus, setPregnancyStatus] = useState('');
-            const [lmp, setLmp] = useState('');
-            const [isFirstTime, setIsFirstTime] = useState('');
-            const [isTeenMother, setIsTeenMother] = useState(false);
+                return `
+                    <div class="bg-white rounded-lg p-8 shadow-md fade-in">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-6">Learning Center</h2>
+                        <div class="grid gap-6">
+                            ${allBlogs.map(blog => `
+                                <div class="p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
+                                    <span class="text-xs bg-pink-200 text-pink-800 px-2 py-1 rounded capitalize">${blog.category}</span>
+                                    <h3 class="text-lg font-semibold text-gray-800 mt-2">${blog.title}</h3>
+                                    <p class="text-gray-700 mt-2 text-sm">${blog.content}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
 
-            const handleRegister = () => {
-                const ageNum = parseInt(age);
-                if (ageNum < 18) {
-                    alert(t.auth.legal_age_error);
-                    return;
-                }
-                
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                if (users[username]) {
-                    alert('Username already exists!');
-                    return;
-                }
-                
-                const isTeen = ageNum < 20;
-                const profile = {
-                    username, password, age: ageNum, country, userRole, pregnancyStatus, 
-                    lmp, isFirstTime: isFirstTime === 'yes', isTeenMother: isTeen, isAdmin: username === 'admin'
-                };
-                
-                users[username] = profile;
-                localStorage.setItem('users', JSON.stringify(users));
-                localStorage.setItem('currentUser', JSON.stringify(profile));
-                
-                onLoginSuccess(profile);
-            };
+            // Event handlers
+            goToPage: function(page) {
+                this.currentPage = page;
+                this.render();
+            },
 
-            const handleLogin = () => {
+            goToLogin: function() {
+                const username = prompt('Username:');
+                if (!username) return;
+                const password = prompt('Password:');
+                if (!password) return;
+
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
                 if (users[username] && users[username].password === password) {
                     localStorage.setItem('currentUser', JSON.stringify(users[username]));
-                    onLoginSuccess(users[username]);
+                    this.userProfile = users[username];
+                    this.isLoggedIn = true;
+                    this.currentPage = 'home';
+                    this.render();
                 } else {
                     alert('Invalid credentials');
                 }
-            };
+            },
 
-            return (
-                <div className="max-w-2xl mx-auto">
-                    {step === 'choice' && (
-                        <div className="bg-white rounded-lg p-8 shadow-lg text-center">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-6">Welcome to {t.hero.title}</h2>
-                            <p className="text-gray-600 mb-8">{t.hero.subtitle}</p>
-                            <div className="space-y-4">
-                                <button
-                                    onClick={() => setStep('register')}
-                                    className="w-full bg-pink-500 text-white py-4 rounded-lg font-semibold hover:bg-pink-600 transition"
-                                >
-                                    {t.auth.register}
-                                </button>
-                                <button
-                                    onClick={() => setStep('login')}
-                                    className="w-full bg-purple-500 text-white py-4 rounded-lg font-semibold hover:bg-purple-600 transition"
-                                >
-                                    {t.auth.login}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'login' && (
-                        <div className="bg-white rounded-lg p-8 shadow-lg">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t.auth.login}</h2>
-                            <div className="space-y-4">
-                                <input
-                                    type="text"
-                                    placeholder={t.auth.username}
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                                />
-                                <input
-                                    type="password"
-                                    placeholder={t.auth.password}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                                />
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleLogin}
-                                        className="flex-1 bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-600 transition"
-                                    >
-                                        {t.auth.login}
-                                    </button>
-                                    <button
-                                        onClick={() => { setStep('choice'); setUsername(''); setPassword(''); }}
-                                        className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 transition"
-                                    >
-                                        {t.common.cancel}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'register' && (
-                        <div className="bg-white rounded-lg p-8 shadow-lg">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t.auth.register}</h2>
-                            <div className="space-y-4">
-                                <input
-                                    type="text"
-                                    placeholder={t.auth.username}
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                                />
-                                <input
-                                    type="password"
-                                    placeholder={t.auth.password}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                                />
-                                <input
-                                    type="number"
-                                    placeholder={t.auth.age}
-                                    value={age}
-                                    onChange={(e) => setAge(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder={t.auth.country}
-                                    value={country}
-                                    onChange={(e) => setCountry(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                                />
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => { setUserRole('mother'); setStep('status'); }}
-                                        className="bg-pink-100 border-2 border-pink-500 text-pink-700 py-3 rounded-lg font-semibold hover:bg-pink-200 transition"
-                                    >
-                                        {t.auth.iAmMother}
-                                    </button>
-                                    <button
-                                        onClick={() => { setUserRole('relative'); setStep('status'); }}
-                                        className="bg-purple-100 border-2 border-purple-500 text-purple-700 py-3 rounded-lg font-semibold hover:bg-purple-200 transition"
-                                    >
-                                        {t.auth.iAmRelative}
-                                    </button>
-                                </div>
-                                <button
-                                    onClick={() => { setStep('choice'); setUsername(''); setPassword(''); setAge(''); setCountry(''); }}
-                                    className="w-full bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 transition"
-                                >
-                                    {t.common.cancel}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'status' && (
-                        <div className="bg-white rounded-lg p-8 shadow-lg">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t.auth.pregnancyStatus}</h2>
-                            <div className="space-y-4">
-                                <button
-                                    onClick={() => { setPregnancyStatus('preparing'); setStep('firstTime'); }}
-                                    className="w-full bg-blue-100 border-2 border-blue-500 text-blue-700 py-3 rounded-lg font-semibold hover:bg-blue-200 transition"
-                                >
-                                    {t.auth.preparingPregnancy}
-                                </button>
-                                <button
-                                    onClick={() => { setPregnancyStatus('pregnant'); setStep('lmp-input'); }}
-                                    className="w-full bg-pink-100 border-2 border-pink-500 text-pink-700 py-3 rounded-lg font-semibold hover:bg-pink-200 transition"
-                                >
-                                    {t.auth.currentlyPregnant}
-                                </button>
-                                <button
-                                    onClick={() => { setStep('register'); setUserRole(''); }}
-                                    className="w-full bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 transition"
-                                >
-                                    {t.common.cancel}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'lmp-input' && (
-                        <div className="bg-white rounded-lg p-8 shadow-lg">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t.auth.lmp}</h2>
-                            <div className="space-y-4">
-                                <input
-                                    type="date"
-                                    value={lmp}
-                                    onChange={(e) => setLmp(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-pink-500"
-                                />
-                                <button
-                                    onClick={() => setStep('firstTime')}
-                                    className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 transition"
-                                >
-                                    {t.common.next}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'firstTime' && (
-                        <div className="bg-white rounded-lg p-8 shadow-lg">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t.auth.firstTime}</h2>
-                            <div className="space-y-4">
-                                <button
-                                    onClick={() => { setIsFirstTime('yes'); setStep('intro'); }}
-                                    className="w-full bg-green-100 border-2 border-green-500 text-green-700 py-3 rounded-lg font-semibold hover:bg-green-200 transition"
-                                >
-                                    {t.auth.yes}
-                                </button>
-                                <button
-                                    onClick={() => { setIsFirstTime('no'); setStep('intro'); }}
-                                    className="w-full bg-orange-100 border-2 border-orange-500 text-orange-700 py-3 rounded-lg font-semibold hover:bg-orange-200 transition"
-                                >
-                                    {t.auth.no}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'intro' && (
-                        <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg p-8 shadow-lg text-center border-2 border-pink-300 fade-in">
-                            <div className="text-6xl mb-4">🎉</div>
-                            <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to Her Greatness!</h2>
-                            <p className="text-lg text-gray-700 mb-6">
-                                {isFirstTime === 'yes' 
-                                    ? "We're excited to support you on your first motherhood journey. You're stronger than you think! 💪"
-                                    : "Welcome back! We're here to support you every step of the way. 💖"}
-                            </p>
-                            <p className="text-gray-600 mb-8">
-                                This app is your safe space to track your pregnancy, mood, habits, and connect with other mothers. Everything is private, secure, and designed with you in mind.
-                            </p>
-                            <button
-                                onClick={() => handleRegister()}
-                                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-lg font-semibold hover:shadow-lg transition text-lg"
-                            >
-                                Start Your Journey
-                            </button>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        // ============ OTHER COMPONENTS (Placeholder) ============
-        function HomePageComponent({ t, userProfile, onNavigate }) {
-            return (
-                <div className="text-center py-12 fade-in">
-                    <h2 className="text-5xl font-bold text-gray-900 mb-4">{t.hero.title}</h2>
-                    <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">{t.hero.description}</p>
-                    <div className="grid md:grid-cols-3 gap-6 mb-8">
-                        <div className="bg-white rounded-lg p-6 shadow-md border border-pink-100">
-                            <div className="text-4xl mb-3">📅</div>
-                            <h3 className="font-semibold text-gray-800">Calendar & Tracking</h3>
-                            <p className="text-sm text-gray-600 mt-2">Monitor your pregnancy milestones</p>
-                        </div>
-                        <div className="bg-white rounded-lg p-6 shadow-md border border-purple-100">
-                            <div className="text-4xl mb-3">📔</div>
-                            <h3 className="font-semibold text-gray-800">Mood Diary</h3>
-                            <p className="text-sm text-gray-600 mt-2">Track feelings and build healthy habits</p>
-                        </div>
-                        <div className="bg-white rounded-lg p-6 shadow-md border border-blue-100">
-                            <div className="text-4xl mb-3">👥</div>
-                            <h3 className="font-semibold text-gray-800">Community</h3>
-                            <p className="text-sm text-gray-600 mt-2">Connect with other mothers</p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function CalendarComponent({ t, userProfile }) {
-            const [pregnancyDate, setPregnancyDate] = useState(userProfile?.lmp || '');
-            const [week, setWeek] = useState(0);
-
-            useEffect(() => {
-                if (pregnancyDate) {
-                    const lmpDate = new Date(pregnancyDate);
-                    const today = new Date();
-                    const diff = Math.floor((today - lmpDate) / (1000 * 60 * 60 * 24 * 7));
-                    setWeek(Math.max(1, Math.min(42, diff)));
+            goToRegister: function() {
+                const username = prompt('Choose a username:');
+                if (!username) return;
+                const password = prompt('Choose a password:');
+                if (!password) return;
+                const age = parseInt(prompt('Your age:'));
+                if (age < 18) {
+                    alert('You must be 18+ to register');
+                    return;
                 }
-            }, [pregnancyDate]);
+                const country = prompt('Your country:');
+                if (!country) return;
 
-            return (
-                <div className="bg-white rounded-lg p-8 shadow-md">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">{t.calendar.title}</h2>
-                    <input type="date" value={pregnancyDate} onChange={(e) => setPregnancyDate(e.target.value)} className="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-lg mb-6" />
-                    {week > 0 && (
-                        <div className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-lg p-6 border border-pink-200">
-                            <p className="text-lg text-gray-800"><span className="font-bold text-pink-600">Week {week}</span> of pregnancy</p>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        function GrowthComponent({ t, userProfile }) {
-            const [month, setMonth] = useState(5);
-
-            return (
-                <div className="space-y-8">
-                    <div className="text-center">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">{t.growth.title}</h2>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-8">
-                        <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-8 shadow-md">
-                            <BabyFruitIllustration month={month} />
-                        </div>
-                        <div className="space-y-4">
-                            <div className="bg-white rounded-lg p-6 shadow-md">
-                                <label className="block text-sm font-semibold mb-4">Select Month</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {babyMonths.map(data => (
-                                        <button
-                                            key={data.month}
-                                            onClick={() => setMonth(data.month)}
-                                            className={`p-2 rounded transition font-semibold ${month === data.month ? 'bg-pink-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                                        >
-                                            M{data.month}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-lg p-6 shadow-md">
-                                <p className="text-4xl mb-3">{babyMonths[month - 1].emoji}</p>
-                                <p className="text-2xl font-bold text-pink-600">{babyMonths[month - 1].fruit}</p>
-                                <div className="mt-4 pt-4 border-t border-gray-200">
-                                    <p className="text-sm text-gray-600">Length: <span className="font-semibold">{babyMonths[month - 1].length}</span></p>
-                                    <p className="text-sm text-gray-600">Weight: <span className="font-semibold">{babyMonths[month - 1].weight}</span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function CommunityComponent({ t, userProfile }) {
-            const [posts, setPosts] = useState(() => {
-                const saved = localStorage.getItem('communityPosts');
-                return saved ? JSON.parse(saved) : [];
-            });
-            const [title, setTitle] = useState('');
-            const [content, setContent] = useState('');
-
-            const createPost = () => {
-                if (title && content) {
-                    const post = {
-                        id: Date.now(),
-                        title, content,
-                        author: 'Anonymous',
-                        date: new Date().toLocaleDateString(),
-                        likes: 0, liked: false
-                    };
-                    const updated = [post, ...posts];
-                    setPosts(updated);
-                    localStorage.setItem('communityPosts', JSON.stringify(updated));
-                    setTitle('');
-                    setContent('');
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[username]) {
+                    alert('Username already exists');
+                    return;
                 }
-            };
 
-            return (
-                <div className="bg-white rounded-lg p-8 shadow-md">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">{t.community.title}</h2>
-                    <div className="mb-6 space-y-3">
-                        <input type="text" placeholder="Post title..." value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-                        <textarea placeholder="Share your thoughts..." value={content} onChange={(e) => setContent(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg h-24" />
-                        <button onClick={createPost} className="w-full bg-pink-500 text-white py-2 rounded-lg font-semibold hover:bg-pink-600 transition">{t.community.createPost}</button>
-                    </div>
-                    <div className="space-y-4">
-                        {posts.map(post => (
-                            <div key={post.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <p className="font-semibold text-gray-800">{post.title}</p>
-                                <p className="text-gray-700 text-sm mt-1">{post.content}</p>
-                                <p className="text-xs text-gray-500 mt-2">{post.author} • {post.date}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
+                const isTeen = age < 20;
+                const profile = {
+                    username, password, age, country, isTeenMother: isTeen, isAdmin: username === 'admin'
+                };
 
-        function BlogComponent({ t, userProfile }) {
-            const [blogs, setBlogs] = useState(() => {
-                const saved = localStorage.getItem('blogs');
-                return saved ? JSON.parse(saved) : [
-                    { id: 1, category: 'forFirstTime', title: 'First Trimester Tips', content: 'The first trimester can feel overwhelming. Here are some tips...' },
-                    { id: 2, category: 'general', title: 'Nutrition During Pregnancy', content: 'Eating well is crucial for your baby\'s development...' }
+                users[username] = profile;
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('currentUser', JSON.stringify(profile));
+
+                this.userProfile = profile;
+                this.isLoggedIn = true;
+                this.currentPage = 'home';
+                alert(`Welcome to Her Greatness! ${isTeen ? 'We have special content for teen parents.' : 'Excited to support you!'}`);
+                this.render();
+            },
+
+            logout: function() {
+                localStorage.removeItem('currentUser');
+                this.isLoggedIn = false;
+                this.userProfile = null;
+                this.currentPage = 'home';
+                this.render();
+            },
+
+            changeLanguage: function(lang) {
+                this.language = lang;
+                localStorage.setItem('language', lang);
+                this.render();
+            },
+
+            selectMonth: function(month) {
+                const fruits = [
+                    { month: 1, emoji: '🔴', name: 'Red Currant', length: '0.5cm', weight: '<1g' },
+                    { month: 2, emoji: '🍒', name: 'Cherry', length: '2.4cm', weight: '2g' },
+                    { month: 3, emoji: '🍑', name: 'Plum', length: '7.5cm', weight: '23g' },
+                    { month: 4, emoji: '🍐', name: 'Pear', length: '15cm', weight: '100g' },
+                    { month: 5, emoji: '🍊', name: 'Grapefruit', length: '25cm', weight: '300g' },
+                    { month: 6, emoji: '🥭', name: 'Papaya', length: '30cm', weight: '600g' },
+                    { month: 7, emoji: '🍍', name: 'Pineapple', length: '35cm', weight: '900g' },
+                    { month: 8, emoji: '🍈', name: 'Cantaloupe', length: '40cm', weight: '1500g' },
+                    { month: 9, emoji: '🍉', name: 'Watermelon', length: '45cm', weight: '2300g' }
                 ];
-            });
+                const fruit = fruits[month - 1];
+                document.getElementById('fruitEmoji').textContent = fruit.emoji;
+                document.getElementById('fruitName').textContent = fruit.name;
+                document.getElementById('fruitLength').textContent = fruit.length;
+                document.getElementById('fruitWeight').textContent = fruit.weight;
+            },
 
-            return (
-                <div className="bg-white rounded-lg p-8 shadow-md">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">{t.blog.title}</h2>
-                    <div className="grid gap-6">
-                        {blogs.map(blog => (
-                            <div key={blog.id} className="p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
-                                <span className="text-xs bg-pink-200 text-pink-800 px-2 py-1 rounded">{t.blog[blog.category]}</span>
-                                <h3 className="text-lg font-semibold text-gray-800 mt-2">{blog.title}</h3>
-                                <p className="text-gray-700 mt-2 text-sm">{blog.content}</p>
-                            </div>
-                        ))}
+            calculateWeek: function() {
+                const lmp = document.getElementById('lmpDate').value;
+                if (!lmp) return;
+                const lmpDate = new Date(lmp);
+                const today = new Date();
+                const diff = Math.floor((today - lmpDate) / (1000 * 60 * 60 * 24 * 7));
+                const week = Math.max(1, Math.min(42, diff));
+                document.getElementById('weekDisplay').innerHTML = `
+                    <div class="bg-gradient-to-r from-pink-100 to-purple-100 rounded-lg p-6 border border-pink-200">
+                        <p class="text-lg text-gray-800">You are <span class="font-bold text-pink-600">Week ${week}</span> of pregnancy</p>
+                        <p class="text-sm text-gray-600 mt-2">${week < 40 ? `${40 - week} weeks until due date` : 'You are at or past your due date'}</p>
                     </div>
-                </div>
-            );
-        }
+                `;
+            },
 
-        function AdminPanelComponent({ t }) {
-            return (
-                <div className="bg-white rounded-lg p-8 shadow-md">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">{t.blog.admin}</h2>
-                    <p className="text-gray-600">Admin panel for managing blog content coming soon...</p>
-                </div>
-            );
-        }
+            setMood: function(emoji) {
+                app.currentMood = emoji;
+            },
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+            saveDiaryEntry: function() {
+                const mood = app.currentMood || '😊';
+                const energy = document.getElementById('energyLevel').value;
+                const symptoms = document.getElementById('symptoms').value;
+                const notes = document.getElementById('notes').value;
+                
+                const habits = [];
+                ['sleep', 'exercise', 'nutrition', 'water', 'meditation'].forEach(h => {
+                    if (document.getElementById(`habit-${h}`).checked) {
+                        habits.push(h);
+                    }
+                });
+
+                const entry = {
+                    date: new Date().toLocaleDateString(),
+                    mood, energy, symptoms, notes, habits
+                };
+
+                const entries = JSON.parse(localStorage.getItem('diaryEntries') || '[]');
+                entries.unshift(entry);
+                localStorage.setItem('diaryEntries', JSON.stringify(entries));
+
+                document.getElementById('symptoms').value = '';
+                document.getElementById('notes').value = '';
+                document.getElementById('energyLevel').value = '3';
+                ['sleep', 'exercise', 'nutrition', 'water', 'meditation'].forEach(h => {
+                    document.getElementById(`habit-${h}`).checked = false;
+                });
+
+                alert('Entry saved!');
+                this.goToPage('diary');
+            },
+
+            createPost: function() {
+                const title = document.getElementById('postTitle').value;
+                const content = document.getElementById('postContent').value;
+                if (!title || !content) {
+                    alert('Please fill in both fields');
+                    return;
+                }
+
+                const post = {
+                    title, content,
+                    date: new Date().toLocaleDateString()
+                };
+
+                const posts = JSON.parse(localStorage.getItem('communityPosts') || '[]');
+                posts.unshift(post);
+                localStorage.setItem('communityPosts', JSON.stringify(posts));
+
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+                alert('Post created!');
+                this.goToPage('community');
+            },
+
+            deletePost: function(idx) {
+                const posts = JSON.parse(localStorage.getItem('communityPosts') || '[]');
+                posts.splice(idx, 1);
+                localStorage.setItem('communityPosts', JSON.stringify(posts));
+                this.goToPage('community');
+            },
+
+            getAIAnswer: function() {
+                const question = document.getElementById('aiQuestion').value;
+                if (!question) {
+                    alert('Please ask a question');
+                    return;
+                }
+
+                const answers = {
+                    'Is morning sickness normal?': 'Yes! Morning sickness is very common during pregnancy. Most pregnant people experience some nausea, especially in the first trimester. Stay hydrated and eat small frequent meals. Contact your doctor if you cannot keep food down.',
+                    'What symptoms should concern me?': 'Contact your doctor immediately if you have: severe abdominal pain, heavy vaginal bleeding, fainting, vision changes, severe headaches, or difficulty breathing. For emergencies, call 911.',
+                    'How much weight should I gain?': 'Weight gain recommendations depend on your pre-pregnancy BMI. Generally: normal weight should gain 25-35 lbs, underweight 28-40 lbs, overweight 15-25 lbs, and obese 11-20 lbs. Discuss with your doctor.',
+                    'When will I feel baby movements?': 'You might feel fetal movements (quickening) between 16-25 weeks, especially if it\'s your first pregnancy. It may feel like butterflies or gentle bubbles. Movements usually become stronger in the third trimester.'
+                };
+
+                const answer = answers[question] || 'That\'s a great question! For detailed medical advice, please consult your healthcare provider.';
+                document.getElementById('aiAnswer').innerHTML = `
+                    <div class="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-6 border border-pink-200 slide-in">
+                        <p class="font-semibold text-gray-800 mb-3">Q: ${question}</p>
+                        <p class="text-gray-700">${answer}</p>
+                    </div>
+                `;
+            },
+
+            askQuestion: function(question) {
+                document.getElementById('aiQuestion').value = question;
+                this.getAIAnswer();
+            },
+
+            attachEventListeners: function() {
+                document.getElementById('energyLevel')?.addEventListener('change', (e) => {
+                    document.getElementById('energyValue').textContent = e.target.value;
+                });
+            }
+        };
+
+        // Translations object
+        const translations = {
+            en: {
+                nav: { home: 'Home', calendar: 'Calendar', growth: 'Baby Growth', diary: 'Diary', community: 'Community', ai: 'AI Q&A', blog: 'Blog' },
+                hero: { title: 'Her Greatness', subtitle: 'Your Complete Pregnancy Companion', description: 'Supporting you through every step with love, care, and expert guidance' },
+                auth: { register: 'Register', login: 'Login', username: 'Username', password: 'Password' },
+                calendar: { title: 'Pregnancy Calendar', lmpLabel: 'Last Menstrual Period' },
+                growth: { title: 'Baby Growth Tracker' },
+                diary: { title: 'Mood & Habits Diary' },
+                community: { title: 'Community Feed' },
+                ai: { title: 'AI Q&A' },
+                blog: { title: 'Learning Center' }
+            },
+            es: {
+                nav: { home: 'Inicio', calendar: 'Calendario', growth: 'Crecimiento del Bebé', diary: 'Diario', community: 'Comunidad', ai: 'IA Q&A', blog: 'Blog' },
+                hero: { title: 'Su Grandeza', subtitle: 'Tu Compañera Completa del Embarazo', description: 'Apoyándote en cada paso con amor, cuidado y orientación experta' },
+                auth: { register: 'Registrarse', login: 'Iniciar Sesión', username: 'Usuario', password: 'Contraseña' },
+                calendar: { title: 'Calendario del Embarazo', lmpLabel: 'Último Período Menstrual' },
+                growth: { title: 'Seguimiento del Crecimiento del Bebé' },
+                diary: { title: 'Diario de Ánimo y Hábitos' },
+                community: { title: 'Feed Comunitario' },
+                ai: { title: 'IA Q&A' },
+                blog: { title: 'Centro de Aprendizaje' }
+            },
+            fr: { nav: { home: 'Accueil', calendar: 'Calendrier', growth: 'Croissance du Bébé', diary: 'Journal', community: 'Communauté', ai: 'IA Q&A', blog: 'Blog' }, hero: { title: 'Sa Grandeur', subtitle: 'Votre Compagne de Grossesse Complète', description: 'Vous soutenir à chaque étape avec amour, soin et guidance experte' }, auth: { register: 'S\'inscrire', login: 'Connexion', username: 'Nom d\'utilisateur', password: 'Mot de passe' }, calendar: { title: 'Calendrier de Grossesse', lmpLabel: 'Dernière Menstruation' }, growth: { title: 'Suivi de la Croissance du Bébé' }, diary: { title: 'Journal d\'Humeur et Habitudes' }, community: { title: 'Feed Communautaire' }, ai: { title: 'IA Q&A' }, blog: { title: 'Centre d\'Apprentissage' } },
+            de: { nav: { home: 'Startseite', calendar: 'Kalender', growth: 'Babywachstum', diary: 'Tagebuch', community: 'Gemeinschaft', ai: 'KI Q&A', blog: 'Blog' }, hero: { title: 'Ihre Größe', subtitle: 'Ihr vollständiger Schwangerschaftsbegleiter', description: 'Unterstützung in jedem Schritt mit Liebe, Fürsorge und fachkundiger Anleitung' }, auth: { register: 'Registrieren', login: 'Anmelden', username: 'Benutzername', password: 'Passwort' }, calendar: { title: 'Schwangerschaftskalender', lmpLabel: 'Letzte Periode' }, growth: { title: 'Babywachtum-Verfolgung' }, diary: { title: 'Stimmungs- und Gewohnheitstagebuch' }, community: { title: 'Gemeinschafts-Feed' }, ai: { title: 'KI Q&A' }, blog: { title: 'Lernzentrum' } },
+            ja: { nav: { home: 'ホーム', calendar: 'カレンダー', growth: '赤ちゃんの成長', diary: '日記', community: 'コミュニティ', ai: 'AI Q&A', blog: 'ブログ' }, hero: { title: 'Her Greatness', subtitle: 'あなたの完全な妊娠の伴侶', description: '愛、ケア、専門家の指導とともに、すべてのステップでサポート' }, auth: { register: '登録', login: 'ログイン', username: 'ユーザー名', password: 'パスワード' }, calendar: { title: '妊娠カレンダー', lmpLabel: '最後の月経' }, growth: { title: '赤ちゃんの成長追跡' }, diary: { title: '気分と習慣日記' }, community: { title: 'コミュニティフィード' }, ai: { title: 'AI Q&A' }, blog: { title: '学習センター' } },
+            zh: { nav: { home: '首页', calendar: '日历', growth: '婴儿成长', diary: '日记', community: '社区', ai: 'AI问答', blog: '博客' }, hero: { title: 'Her Greatness', subtitle: '您完整的怀孕伴侣', description: '用爱心、关怀和专家指导支持您的每一步' }, auth: { register: '注册', login: '登录', username: '用户名', password: '密码' }, calendar: { title: '怀孕日历', lmpLabel: '最后一次月经' }, growth: { title: '婴儿成长追踪' }, diary: { title: '心情和习惯日记' }, community: { title: '社区动态' }, ai: { title: 'AI问答' }, blog: { title: '学习中心' } },
+            it: { nav: { home: 'Home', calendar: 'Calendario', growth: 'Crescita del Bambino', diary: 'Diario', community: 'Comunità', ai: 'IA Q&A', blog: 'Blog' }, hero: { title: 'Her Greatness', subtitle: 'La Tua Compagna di Gravidanza Completa', description: 'Supportarti ad ogni passo con amore, cura e guida esperta' }, auth: { register: 'Registrati', login: 'Accedi', username: 'Nome utente', password: 'Password' }, calendar: { title: 'Calendario della Gravidanza', lmpLabel: 'Ultimo Ciclo' }, growth: { title: 'Tracciamento della Crescita del Bambino' }, diary: { title: 'Diario di Umore e Abitudini' }, community: { title: 'Feed Comunità' }, ai: { title: 'IA Q&A' }, blog: { title: 'Centro di Apprendimento' } },
+            ru: { nav: { home: 'Главная', calendar: 'Календарь', growth: 'Рост ребенка', diary: 'Дневник', community: 'Сообщество', ai: 'ИИ Q&A', blog: 'Блог' }, hero: { title: 'Her Greatness', subtitle: 'Ваш Полный Спутник при Беременности', description: 'Поддержка на каждом шаге с любовью, заботой и экспертным руководством' }, auth: { register: 'Зарегистрироваться', login: 'Вход', username: 'Имя пользователя', password: 'Пароль' }, calendar: { title: 'Календарь Беременности', lmpLabel: 'Последняя Менструация' }, growth: { title: 'Отслеживание Роста Ребенка' }, diary: { title: 'Дневник Настроения и Привычек' }, community: { title: 'Лента Сообщества' }, ai: { title: 'ИИ Q&A' }, blog: { title: 'Центр Обучения' } },
+            ar: { nav: { home: 'الرئيسية', calendar: 'التقويم', growth: 'نمو الطفل', diary: 'اليوميات', community: 'المجتمع', ai: 'الذكاء الاصطناعي Q&A', blog: 'مدونة' }, hero: { title: 'Her Greatness', subtitle: 'رفيقك الكامل للحمل', description: 'دعمك في كل خطوة بحب وعناية وإرشادات خبيرة' }, auth: { register: 'تسجيل', login: 'دخول', username: 'اسم المستخدم', password: 'كلمة المرور' }, calendar: { title: 'تقويم الحمل', lmpLabel: 'آخر دورة شهرية' }, growth: { title: 'تتبع نمو الطفل' }, diary: { title: 'يوميات المزاج والعادات' }, community: { title: 'مجتمع الخلاصة' }, ai: { title: 'الذكاء الاصطناعي Q&A' }, blog: { title: 'مركز التعلم' } },
+            pt: { nav: { home: 'Início', calendar: 'Calendário', growth: 'Crescimento do Bebê', diary: 'Diário', community: 'Comunidade', ai: 'IA Q&A', blog: 'Blog' }, hero: { title: 'Her Greatness', subtitle: 'Sua Companheira Completa de Gravidez', description: 'Apoiando você em cada passo com amor, cuidado e orientação especializada' }, auth: { register: 'Registrar', login: 'Entrar', username: 'Nome de usuário', password: 'Senha' }, calendar: { title: 'Calendário de Gravidez', lmpLabel: 'Última Menstruação' }, growth: { title: 'Rastreamento de Crescimento do Bebê' }, diary: { title: 'Diário de Humor e Hábitos' }, community: { title: 'Feed da Comunidade' }, ai: { title: 'IA Q&A' }, blog: { title: 'Centro de Aprendizado' } },
+            th: { nav: { home: 'หน้าแรก', calendar: 'ปฏิทิน', growth: 'การเจริญเติบโตของทารก', diary: 'สมุดบันทึก', community: 'ชุมชน', ai: 'ไอคิวแอนด์เอ', blog: 'บล็อก' }, hero: { title: 'Her Greatness', subtitle: 'เพื่อนร่วมทางการตั้งครรภ์ที่สมบูรณ์ของคุณ', description: 'สนับสนุนคุณในทุกขั้นตอนด้วยความรัก การดูแล และคำแนะนำของผู้เชี่ยวชาญ' }, auth: { register: 'ลงทะเบียน', login: 'เข้าสู่ระบบ', username: 'ชื่อผู้ใช้', password: 'รหัสผ่าน' }, calendar: { title: 'ปฏิทินการตั้งครรภ์', lmpLabel: 'ประจำเดือนครั้งสุดท้าย' }, growth: { title: 'ติดตามการเจริญเติบโตของทารก' }, diary: { title: 'สมุดบันทึกอารมณ์และนิสัย' }, community: { title: 'ฟีดชุมชน' }, ai: { title: 'ไอคิวแอนด์เอ' }, blog: { title: 'ศูนย์การเรียนรู้' } }
+        };
+
+        // Initialize app
+        app.render();
     </script>
 </body>
 </html>
